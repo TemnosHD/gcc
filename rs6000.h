@@ -163,7 +163,7 @@
 %{mcpu=e500mc64: -me500mc64} \
 %{mcpu=e5500: -me5500} \
 %{mcpu=e6500: -me6500} \
-%{mcpu=nux: -mpower7} \
+%{mcpu=nux: %(asm_cpu_power7)} \
 %{maltivec: -maltivec} \
 %{mvsx: -mvsx %{!maltivec: -maltivec} %{!mcpu*: %(asm_cpu_power7)}} \
 %{mpower8-vector|mcrypto|mdirect-move|mhtm: %{!mcpu*: %(asm_cpu_power8)}} \

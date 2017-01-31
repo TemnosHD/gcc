@@ -1726,15 +1726,11 @@ rs6000_hard_regno_nregs_internal (int regno, enum machine_mode mode)
 {
   unsigned HOST_WIDE_INT reg_size;
 
-  //if (S2PP_REGNO_P (regno) && TARGET_S2PP)
-    //reg_size = UNITS_PER_S2PP_WORD;
 
   /* TF/TD modes are special in that they always take 2 registers.  */
   if (FP_REGNO_P (regno) && !TARGET_S2PP)
     reg_size = ((VECTOR_MEM_VSX_P (mode) && mode != TDmode && mode != TFmode)
 		? UNITS_PER_VSX_WORD
-		//: VECTOR_MEM_S2PP_P (mode)
-		//? UNITS_PER_S2PP_WORD
 		: UNITS_PER_FP_WORD);
 
   else if (SPE_SIMD_REGNO_P (regno) && TARGET_SPE && SPE_VECTOR_MODE (mode))
@@ -1743,7 +1739,7 @@ rs6000_hard_regno_nregs_internal (int regno, enum machine_mode mode)
   else if (ALTIVEC_REGNO_P (regno))
     reg_size = UNITS_PER_ALTIVEC_WORD;
 
-  else if (S2PP_REGNO_P (regno))
+  else if (S2PP_REGNO_P (regno) && TARGET_S2PP)
     reg_size = UNITS_PER_S2PP_WORD;
 
   /* The value returned for SCmode in the E500 double case is 2 for
@@ -8060,7 +8056,7 @@ rs6000_conditional_register_usage (void)
 	= call_really_used_regs[i] = 1;
 
   if (TARGET_S2PP){
-    fixed_regs[32] = call_used_regs[32] = call_really_used_regs[32] = 1;
+    //fixed_regs[32] = call_used_regs[32] = call_really_used_regs[32] = 1;
     fixed_regs[64] = call_used_regs[64] = call_really_used_regs[64] = 1;
     //fixed_regs[68] = call_used_regs[68] = call_really_used_regs[68] = 1;
   }
@@ -18941,7 +18937,7 @@ rs6000_cannot_change_mode_class (enum machine_mode from,
 
   if (from_size != to_size)
     {
-      enum reg_class xclass = (TARGET_VSX) ? VSX_REGS : FLOAT_REGS;
+      enum reg_class xclass = (TARGET_VSX) ? VSX_REGS : (TARGET_S2PP ? S2PP_REGS : FLOAT_REGS);
 
       if (reg_classes_intersect_p (xclass, rclass))
 	{
@@ -24502,7 +24498,7 @@ rs6000_emit_prologue (void)
 #define NOT_INUSE(R) do {} while (0)
 #endif
 
-  fprintf (stderr, "prologue begins\n");
+  //fprintf (stderr, "prologue begins\n");
 
   if (DEFAULT_ABI == ABI_ELFv2)
     {
@@ -24768,7 +24764,7 @@ rs6000_emit_prologue (void)
      it ourselves.  Otherwise, call function.  */
   if (!WORLD_SAVE_P (info) && (strategy & SAVE_INLINE_FPRS))
     {
-      fprintf (stderr, "save fprs with emit frame save\n");
+      //fprintf (stderr, "save fprs with emit frame save\n");
       int i;
       if (!TARGET_S2PP){
         for (i = 0; i < 64 - info->first_fp_reg_save; i++)
@@ -26544,7 +26540,7 @@ rs6000_emit_epilogue (int sibcall)
       for (i = 0; info->first_s2pp_reg_save + i <= LAST_S2PP_REGNO; i++){
         if (save_reg_p (info->first_s2pp_reg_save + i))
         {  
-          fprintf (stderr, "epilogue marker\n");
+          //fprintf (stderr, "epilogue marker\n");
           int offset = info->s2pp_save_offset + frame_off + 16 * i;
           rtx areg = gen_rtx_REG (Pmode, 0);
           emit_move_insn (areg, GEN_INT (offset)); 
