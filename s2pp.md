@@ -49,6 +49,7 @@
    UNSPEC_FXVUPCKR_DIRECT
    UNSPEC_FXVSELECT
    UNSPEC_FXVSYNC
+   UNSPEC_FXVCMP
 ])  
 
 ;; Vec int modes
@@ -203,8 +204,8 @@
   "#"
   "reload_completed && !optimize_size"
   [(set (match_operand:FXVI 0 "memory_operand" "")
-	(unspec:FXVI [(match_operand:FXVI 1 "s2pp_register_operand" "")] FXVSTAX))
-   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+	(unspec:FXVI [(match_operand:FXVI 1 "s2pp_register_operand" "")] FXVSTAX))]
+   ;;(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   ""
   [(set_attr "type" "vecstore")])
 
@@ -236,8 +237,8 @@
   "#"
   "reload_completed && !optimize_size"
   [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
-	(unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "")] FXVLAX))
-   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+	(unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "")] FXVLAX))]
+;;   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   ""
   [(set_attr "type" "vecload")])
 
@@ -277,8 +278,7 @@
   "#"
   "reload_completed"
   [(set (match_operand:FXVI 0 "memory_operand" "=Z")
-	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")] FXVOUTX))
-   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")] FXVOUTX))]
   ""
   [(set_attr "type" "vecstore")])
 
@@ -309,8 +309,7 @@
   "#"
   "reload_completed"
   [(set (match_operand:FXVI 0 "register_operand" "")
-        (unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "")] FXVINX))
-   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+        (unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "")] FXVINX))]
   ""
   [(set_attr "type" "vecload")])
 
@@ -347,7 +346,9 @@
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
 	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
 		      (match_operand:FXVI 2 "register_operand" "kv")
-		      (match_operand:SI 3 "u2bit_cint_operand" "i")] UNSPEC_FXVADD))]
+		      (match_operand:SI 3 "u2bit_cint_operand" "i")
+		      (reg:FXVI S2PP_COND_REGNO)]
+	UNSPEC_FXVADD))]
   "<FXVI_unit>"
   "fxvadd<FXVI_char>m %0,%1,%2,%3"
   [(set_attr "type" "vecsimple")])
@@ -356,8 +357,9 @@
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
         (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
 		      (match_operand:FXVI 2 "register_operand" "kv")
-		      (match_operand:SI 3 "u2bit_cint_operand" "i")]
-		   UNSPEC_FXVADDF))]
+		      (match_operand:SI 3 "u2bit_cint_operand" "i")
+		      (reg:FXVI S2PP_COND_REGNO)]
+	UNSPEC_FXVADDF))]
   "<FXVI_unit>"
   "fxvadd<FXVI_char>fs %0,%1,%2,%3"
   [(set_attr "type" "vecsimple")])
@@ -432,8 +434,7 @@
   [(set (match_operand:FXVI 0 "register_operand" "")
 	(unspec:FXVI
 	     [(match_operand:SI 1 "register_operand" "")]
-	UNSPEC_FXVSPLAT_DIRECT))
-  (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+	UNSPEC_FXVSPLAT_DIRECT))]
   ""
   [(set_attr "type" "vecperm")])
 
@@ -497,7 +498,7 @@
 ;;compare
 (define_insn "s2pp_fxvcmp<FXVI_char>"
   [(set (reg:FXVI S2PP_COND_REGNO)
-        (match_operand:FXVI 0 "register_operand" "kv"))]
+        (unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")] UNSPEC_FXVCMP))]
   "TARGET_S2PP"
   "fxvcmp<FXVI_char> %0"
   [(set_attr "type" "veccmp")])

@@ -8056,7 +8056,7 @@ rs6000_conditional_register_usage (void)
 	= call_really_used_regs[i] = 1;
 
   if (TARGET_S2PP){
-    //fixed_regs[32] = call_used_regs[32] = call_really_used_regs[32] = 1;
+    fixed_regs[32] = call_used_regs[32] = call_really_used_regs[32] = 1;
     fixed_regs[64] = call_used_regs[64] = call_really_used_regs[64] = 1;
     //fixed_regs[68] = call_used_regs[68] = call_really_used_regs[68] = 1;
   }
