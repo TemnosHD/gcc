@@ -21,6 +21,7 @@
    UNSPEC_FXVSPLAT_DIRECT
    UNSPEC_FXVSPLAT
    UNSPEC_FXVADD
+   UNSPEC_FXVADD_C
    UNSPEC_FXVADDF
    UNSPEC_FXVMA
    UNSPEC_FXVMAF
@@ -345,12 +346,31 @@
 (define_insn "s2pp_fxvadd<FXVI_char>m"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
 	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
+		      (match_operand:FXVI 2 "register_operand" "kv")]
+	UNSPEC_FXVADD))]
+  "<FXVI_unit>"
+  "fxvadd<FXVI_char>m %0,%1,%2"
+  [(set_attr "type" "vecsimple")])
+
+(define_insn_and_split "s2pp_fxvadd<FXVI_char>m_c"
+  [(set (match_operand:FXVI 0 "register_operand" "=kv")
+	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
 		      (match_operand:FXVI 2 "register_operand" "kv")
 		      (match_operand:SI 3 "u2bit_cint_operand" "i")
 		      (reg:FXVI S2PP_COND_REGNO)]
-	UNSPEC_FXVADD))]
+	UNSPEC_FXVADD_C))]
   "<FXVI_unit>"
-  "fxvadd<FXVI_char>m %0,%1,%2,%3"
+  "#"
+  "can_create_pseudo_p()"
+  [(set (match_dup 4)
+	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "")
+		      (match_operand:FXVI 2 "register_operand" "")]
+	UNSPEC_FXVADD))
+   (set (match_operand:FXVI 0 "register_operand" "")
+	 (unspec:FXVI [(match_operand:SI 3 "u2bit_cint_operand" "")
+	 (match_operand:FXVI 0 "register_operand" "")
+	 (match_dup 4)] UNSPEC_FXVSELECT))]
+   "{operands[4] = gen_reg_rtx (<MODE>mode);}"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvadd<FXVI_char>fs"
