@@ -1,0 +1,741 @@
+diff --git a/rs6000.c b/rs6000.c
+index c2ed5e4..a279a38 100644
+--- a/rs6000.c
++++ b/rs6000.c
+@@ -93,12 +93,14 @@
+ #define min(A,B)	((A) < (B) ? (A) : (B))
+ #define max(A,B)	((A) > (B) ? (A) : (B))
+ 
+ 
++    
++//special handling for void intrinsic
++//fxvcmp has only one mode -> 2nd mode is mode from other insn
++  if (icode == CODE_FOR_s2pp_fxvcmpb
++	|| icode == CODE_FOR_s2pp_fxvcmph
++	|| icode == CODE_FOR_s2pp_fxvmtacb
++	|| icode == CODE_FOR_s2pp_fxvmtach){
++    fprintf (stderr, "icode: %d, code_for_fxvcmpb: %d, code_for_fxvcmph: %d", icode, CODE_FOR_s2pp_fxvcmpb, CODE_FOR_s2pp_fxvcmph);
++    if (! (*insn_data[icode].operand[0].predicate) (op0, tmode))
++      op0 = copy_to_mode_reg (tmode, op0);
++    pat = GEN_FCN (icode) (op0);
++    if (! pat)
++      return 0;
++    emit_insn (pat);
++    return NULL_RTX;
++  }
+ 
++  if (target == 0
++      || GET_MODE (target) != tmode
++      || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
++    target = gen_reg_rtx (tmode);
++    
+   if (! (*insn_data[icode].operand[1].predicate) (op0, mode0))
+     op0 = copy_to_mode_reg (mode0, op0);
+-
++  
+   pat = GEN_FCN (icode) (target, op0);
++  
+   if (! pat)
+     return 0;
+   emit_insn (pat);
+ 
+ static rtx
+ rs6000_expand_binop_builtin (enum insn_code icode, tree exp, rtx target)
+ {
+ 
+@@ -12255,6 +12622,54 @@ altivec_expand_lv_builtin (enum insn_code icode, tree exp, rtx target, bool blk)
+ }
+ 
+ static rtx
++s2pp_expand_lv_builtin (enum insn_code icode, tree exp, rtx target, bool blk)
++{
++  rtx pat, addr;
++  tree arg0 = CALL_EXPR_ARG (exp, 0);
++  tree arg1 = CALL_EXPR_ARG (exp, 1);
++  enum machine_mode tmode = insn_data[icode].operand[0].mode;
++  enum machine_mode mode0 = Pmode;
++  enum machine_mode mode1 = Pmode;
++  rtx op0 = expand_normal (arg0);
++  rtx op1 = expand_normal (arg1);
++
++  if (icode == CODE_FOR_nothing)
++    /* Builtin not supported on this processor.  */
++    return 0;
++
++  /* If we got invalid arguments bail out before generating bad rtl.  */
++  if (arg0 == error_mark_node || arg1 == error_mark_node)
++    return const0_rtx;
++
++  if (target == 0
++      || GET_MODE (target) != tmode
++      || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
++    target = gen_reg_rtx (tmode);
++
++  op1 = copy_to_mode_reg (mode1, op1);
++
++  if (op0 == const0_rtx)
++    {
++      addr = gen_rtx_MEM (blk ? BLKmode : tmode, op1);
++    }
++  else
++    {
++      op0 = copy_to_mode_reg (mode0, op0);
++      addr = gen_rtx_MEM (blk ? BLKmode : tmode, gen_rtx_PLUS (Pmode, op0, op1));
++    }
++
++  pat = GEN_FCN (icode) (target, addr);
++
++  if (! pat)
++    return 0;
++  //emit_insn (gen_sync());
++  emit_insn (pat);
++
++  return target;
++}
++
++
++static rtx
+ spe_expand_stv_builtin (enum insn_code icode, tree exp)
+ {
+   tree arg0 = CALL_EXPR_ARG (exp, 0);
+@@ -12370,15 +12785,58 @@ altivec_expand_stv_builtin (enum insn_code icode, tree exp)
+   return NULL_RTX;
+ }
+ 
+-/* Return the appropriate SPR number associated with the given builtin.  */
+-static inline HOST_WIDE_INT
+-htm_spr_num (enum rs6000_builtins code)
++static rtx
++s2pp_expand_stv_builtin (enum insn_code icode, tree exp)
+ {
+-  if (code == HTM_BUILTIN_GET_TFHAR
+-      || code == HTM_BUILTIN_SET_TFHAR)
+-    return TFHAR_SPR;
+-  else if (code == HTM_BUILTIN_GET_TFIAR
+-	   || code == HTM_BUILTIN_SET_TFIAR)
++  tree arg0 = CALL_EXPR_ARG (exp, 0);
++  tree arg1 = CALL_EXPR_ARG (exp, 1);
++  tree arg2 = CALL_EXPR_ARG (exp, 2);
++  rtx op0 = expand_normal (arg0);
++  rtx op1 = expand_normal (arg1);
++  rtx op2 = expand_normal (arg2);
++  rtx pat, addr;
++  enum machine_mode tmode = insn_data[icode].operand[0].mode;
++  enum machine_mode smode = insn_data[icode].operand[1].mode;
++  enum machine_mode mode1 = Pmode;
++  enum machine_mode mode2 = Pmode;
++
++  /* Invalid arguments.  Bail before doing anything stoopid!  */
++  if (arg0 == error_mark_node
++      || arg1 == error_mark_node
++      || arg2 == error_mark_node)
++    return const0_rtx;
++
++  if (! (*insn_data[icode].operand[1].predicate) (op0, smode))
++    op0 = copy_to_mode_reg (smode, op0);
++
++  op2 = copy_to_mode_reg (mode2, op2);
++
++  if (op1 == const0_rtx)
++    {
++      addr = gen_rtx_MEM (tmode, op2);
++    }
++  else
++    {
++      op1 = copy_to_mode_reg (mode1, op1);
++      addr = gen_rtx_MEM (tmode, gen_rtx_PLUS (Pmode, op1, op2));
++    }
++
++  pat = GEN_FCN (icode) (addr, op0);
++  //emit_insn (gen_sync());
++  if (pat)
++    emit_insn (pat);
++  return NULL_RTX;
++}
++
++/* Return the appropriate SPR number associated with the given builtin.  */
++static inline HOST_WIDE_INT
++htm_spr_num (enum rs6000_builtins code)
++{
++  if (code == HTM_BUILTIN_GET_TFHAR
++      || code == HTM_BUILTIN_SET_TFHAR)
++    return TFHAR_SPR;
++  else if (code == HTM_BUILTIN_GET_TFIAR
++	   || code == HTM_BUILTIN_SET_TFIAR)
+     return TFIAR_SPR;
+   else if (code == HTM_BUILTIN_GET_TEXASR
+ 	   || code == HTM_BUILTIN_SET_TEXASR)
+@@ -13320,6 +13778,489 @@ altivec_expand_builtin (tree exp, rtx target, bool *expandedp)
+   return NULL_RTX;
+ }
+ 
++/* Expand the lax builtins.  */
++static rtx
++s2pp_expand_ld_builtin (tree exp, rtx target, bool *expandedp)
++{
++  tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
++  unsigned int fcode = DECL_FUNCTION_CODE (fndecl);
++  tree arg0;
++  enum machine_mode tmode, mode0;
++  rtx pat, op0;
++  enum insn_code icode;
++
++  switch (fcode)
++    {
++    case S2PP_BUILTIN_LD_INTERNAL_16qi:
++      icode = CODE_FOR_vector_s2pp_load_v16qi;
++      break;
++    case S2PP_BUILTIN_LD_INTERNAL_8hi:
++      icode = CODE_FOR_vector_s2pp_load_v8hi;
++      break;
++    case S2PP_BUILTIN_IN_INTERNAL_16qi:
++      icode = CODE_FOR_vector_s2pp_input_v16qi;
++      break;
++    case S2PP_BUILTIN_IN_INTERNAL_8hi:
++      icode = CODE_FOR_vector_s2pp_input_v8hi;
++      break;
++    default:
++      *expandedp = false;
++      return NULL_RTX;
++    }
++
++  *expandedp = true;
++
++  arg0 = CALL_EXPR_ARG (exp, 0);
++  op0 = expand_normal (arg0);
++  tmode = insn_data[icode].operand[0].mode;
++  mode0 = insn_data[icode].operand[1].mode;
++
++  if (target == 0
++      || GET_MODE (target) != tmode
++      || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
++    target = gen_reg_rtx (tmode);
++
++  if (! (*insn_data[icode].operand[1].predicate) (op0, mode0))
++    op0 = gen_rtx_MEM (mode0, copy_to_mode_reg (Pmode, op0));
++
++  pat = GEN_FCN (icode) (target, op0);
++  if (! pat)
++    return 0;
++  emit_insn (pat);
++  return target;
++}
++
++/* Expand the stax builtins.  */
++static rtx
++s2pp_expand_st_builtin (tree exp, rtx target ATTRIBUTE_UNUSED,
++			   bool *expandedp)
++{
++  tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
++  unsigned int fcode = DECL_FUNCTION_CODE (fndecl);
++  tree arg0, arg1;
++  enum machine_mode mode0, mode1;
++  rtx pat, op0, op1;
++  enum insn_code icode;
++
++  switch (fcode)
++    {
++    case S2PP_BUILTIN_ST_INTERNAL_16qi:
++      icode = CODE_FOR_vector_s2pp_store_v16qi;
++      break;
++    case S2PP_BUILTIN_ST_INTERNAL_8hi:
++      icode = CODE_FOR_vector_s2pp_store_v8hi;
++      break;
++    case S2PP_BUILTIN_OUT_INTERNAL_16qi:
++      icode = CODE_FOR_vector_s2pp_output_v16qi;
++      break;
++    case S2PP_BUILTIN_OUT_INTERNAL_8hi:
++      icode = CODE_FOR_vector_s2pp_output_v8hi;
++      break;
++    default:
++      *expandedp = false;
++      return NULL_RTX;
++    }
++
++  arg0 = CALL_EXPR_ARG (exp, 0);
++  arg1 = CALL_EXPR_ARG (exp, 1);
++  op0 = expand_normal (arg0);
++  op1 = expand_normal (arg1);
++  mode0 = insn_data[icode].operand[0].mode;
++  mode1 = insn_data[icode].operand[1].mode;
++
++  if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
++    op0 = gen_rtx_MEM (mode0, copy_to_mode_reg (Pmode, op0));
++  if (! (*insn_data[icode].operand[1].predicate) (op1, mode1))
++    op1 = copy_to_mode_reg (mode1, op1);
++
++  pat = GEN_FCN (icode) (op0, op1);
++  if (pat)
++    emit_insn (pat);
++
++  *expandedp = true;
++  return NULL_RTX;
++}
++
++/* Expand the builtin in EXP and store the result in TARGET.  Store
++   true in *EXPANDEDP if we found a builtin to expand.  */
++
++/* Expand vec_init builtin.  */
++static rtx
++s2pp_expand_vec_init_builtin (tree type, tree exp, rtx target)
++{
++  enum machine_mode tmode = TYPE_MODE (type);
++  enum machine_mode inner_mode = GET_MODE_INNER (tmode);
++  int i, n_elt = GET_MODE_NUNITS (tmode);
++
++  gcc_assert (VECTOR_MODE_P (tmode));
++  gcc_assert (n_elt == call_expr_nargs (exp));
++
++  if (!target || !register_operand (target, tmode))
++    target = gen_reg_rtx (tmode);
++
++  /* If we have a vector compromised of a single element, such as V1TImode, do
++     the initialization directly.  */
++  if (n_elt == 1 && GET_MODE_SIZE (tmode) == GET_MODE_SIZE (inner_mode))
++    {
++      rtx x = expand_normal (CALL_EXPR_ARG (exp, 0));
++      emit_move_insn (target, gen_lowpart (tmode, x));
++    }
++  else
++    {
++      rtvec v = rtvec_alloc (n_elt);
++
++      for (i = 0; i < n_elt; ++i)
++	{
++	  rtx x = expand_normal (CALL_EXPR_ARG (exp, i));
++	  RTVEC_ELT (v, i) = gen_lowpart (inner_mode, x);
++	}
++
++      rs6000_expand_vector_init (target, gen_rtx_PARALLEL (tmode, v));
++    }
++
++  return target;
++}
++
++/* Expand vec_set builtin.  */
++static rtx
++s2pp_expand_vec_set_builtin (tree exp)
++{
++  enum machine_mode tmode, mode1;
++  tree arg0, arg1, arg2;
++  int elt;
++  rtx op0, op1;
++
++  arg0 = CALL_EXPR_ARG (exp, 0);
++  arg1 = CALL_EXPR_ARG (exp, 1);
++  arg2 = CALL_EXPR_ARG (exp, 2);
++
++  tmode = TYPE_MODE (TREE_TYPE (arg0));
++  mode1 = TYPE_MODE (TREE_TYPE (TREE_TYPE (arg0)));
++  gcc_assert (VECTOR_MODE_P (tmode));
++
++  op0 = expand_expr (arg0, NULL_RTX, tmode, EXPAND_NORMAL);
++  op1 = expand_expr (arg1, NULL_RTX, mode1, EXPAND_NORMAL);
++  elt = get_element_number (TREE_TYPE (arg0), arg2);
++
++  if (GET_MODE (op1) != mode1 && GET_MODE (op1) != VOIDmode)
++    op1 = convert_modes (mode1, GET_MODE (op1), op1, true);
++
++  op0 = force_reg (tmode, op0);
++  op1 = force_reg (mode1, op1);
++
++  rs6000_expand_vector_set (op0, op1, elt);
++
++  return op0;
++}
++
++/* Expand vec_ext builtin.  */
++static rtx
++s2pp_expand_vec_ext_builtin (tree exp, rtx target)
++{
++  enum machine_mode tmode, mode0;
++  tree arg0, arg1;
++  int elt;
++  rtx op0;
++
++  arg0 = CALL_EXPR_ARG (exp, 0);
++  arg1 = CALL_EXPR_ARG (exp, 1);
++
++  op0 = expand_normal (arg0);
++  elt = get_element_number (TREE_TYPE (arg0), arg1);
++
++  tmode = TYPE_MODE (TREE_TYPE (TREE_TYPE (arg0)));
++  mode0 = TYPE_MODE (TREE_TYPE (arg0));
++  gcc_assert (VECTOR_MODE_P (mode0));
++
++  op0 = force_reg (mode0, op0);
++
++  if (optimize || !target || !register_operand (target, tmode))
++    target = gen_reg_rtx (tmode);
++
++  rs6000_expand_vector_extract (target, op0, elt);
++
++  return target;
++}
++//expand single argument special builtin
++static rtx
++s2pp_expand_unaryx_builtin (enum insn_code icode, tree exp)
++{
++      tree arg0;
++      rtx op0, pat;
++      enum machine_mode mode0; //, tmode;
++      arg0 = CALL_EXPR_ARG (exp, 0);
++      op0 = expand_normal (arg0);
++      mode0 = insn_data[icode].operand[0].mode;
++
++      /* If we got invalid arguments bail out before generating bad rtl.  */
++      if (arg0 == error_mark_node)
++        return const0_rtx;
++
++      if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
++        op0 = copy_to_mode_reg (mode0, op0);
++
++      pat = GEN_FCN (icode) (op0);
++      if (pat)
++        emit_insn (pat);
++      return NULL_RTX;
++}
++//expand double argument special builtin
++static rtx
++s2pp_expand_binaryx_builtin (enum insn_code icode, tree exp)
++{
++      tree arg0, arg1;
++      rtx op0, op1, pat;
++      enum machine_mode mode0, mode1; //, tmode;
++      arg0 = CALL_EXPR_ARG (exp, 0);
++      arg1 = CALL_EXPR_ARG (exp, 1);
++      op0 = expand_normal (arg0);
++      op1 = expand_normal (arg1);
++      mode0 = insn_data[icode].operand[0].mode;
++      mode1 = insn_data[icode].operand[1].mode;
++
++      /* If we got invalid arguments bail out before generating bad rtl.  */
++      if (arg0 == error_mark_node || arg1 == error_mark_node)
++        return const0_rtx;
++
++      if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
++        op0 = copy_to_mode_reg (mode0, op0);
++
++      if (! (*insn_data[icode].operand[1].predicate) (op1, mode1))
++        op1 = copy_to_mode_reg (mode1, op1);
++
++      pat = GEN_FCN (icode) (op0, op1);
++      if (pat)
++        emit_insn (pat);
++      return NULL_RTX;
++}
++//expand triple argument special builtin
++static rtx
++s2pp_expand_ternaryx_builtin (enum insn_code icode, tree exp)
++{
++      tree arg0, arg1, arg2;
++      rtx op0, op1, op2, pat;
++      enum machine_mode mode0, mode1, mode2; //, tmode;
++      arg0 = CALL_EXPR_ARG (exp, 0);
++      arg1 = CALL_EXPR_ARG (exp, 1);
++      arg2 = CALL_EXPR_ARG (exp, 2);
++      op0 = expand_normal (arg0);
++      op1 = expand_normal (arg1);
++      op2 = expand_normal (arg2);
++      mode0 = insn_data[icode].operand[0].mode;
++      mode1 = insn_data[icode].operand[1].mode;
++      mode2 = insn_data[icode].operand[2].mode;
++
++      /* If we got invalid arguments bail out before generating bad rtl.  */
++      if (arg0 == error_mark_node
++	  || arg1 == error_mark_node
++	  || arg2 == error_mark_node)
++        return const0_rtx;
++
++      if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
++        op0 = copy_to_mode_reg (mode0, op0);
++
++      if (! (*insn_data[icode].operand[1].predicate) (op1, mode1))
++        op1 = copy_to_mode_reg (mode1, op1);
++
++      if (! (*insn_data[icode].operand[2].predicate) (op2, mode2))
++        op2 = copy_to_mode_reg (mode2, op2);
++
++      pat = GEN_FCN (icode) (op0, op1, op2);
++      if (pat)
++        emit_insn (pat);
++      return NULL_RTX;
++}
++/* Return the integer constant in ARG.  Constrain it to be in the range
++   of the subparts of VEC_TYPE; issue an error if not.  */
++static rtx
++s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
++{
++  //const struct builtin_description *d;
++  //size_t i;
++  //enum insn_code icode;
++  tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
++  //tree arg0;
++  //rtx op0, pat;
++  //enum machine_mode mode0; //, tmode;
++  enum rs6000_builtins fcode
++    = (enum rs6000_builtins) DECL_FUNCTION_CODE (fndecl);
++
++  if (rs6000_overloaded_builtin_p (fcode))
++    {
++      *expandedp = true;
++      error ("unresolved overload for s2pp builtin %qF", fndecl);
++
++      /* Given it is invalid, just generate a normal call.  */
++      return expand_call (exp, target, false);
++    }
++
++  target = s2pp_expand_ld_builtin (exp, target, expandedp);
++  if (*expandedp)
++    return target;
++
++  target = s2pp_expand_st_builtin (exp, target, expandedp);
++  if (*expandedp)
++    return target;
++
++//  target = s2pp_expand_dst_builtin (exp, target, expandedp);
++//  if (*expandedp)
++//    return target;
++
++  *expandedp = true;
++
++  switch (fcode)
++    {
++    case S2PP_BUILTIN_FXVSTAX_V8HI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_v8hi, exp);
++    case S2PP_BUILTIN_FXVSTAX_V16QI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_v16qi, exp);
++    case S2PP_BUILTIN_FXVSTAX_GT_V8HI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_gt_v8hi, exp);
++    case S2PP_BUILTIN_FXVSTAX_GT_V16QI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_gt_v16qi, exp);
++    case S2PP_BUILTIN_FXVSTAX_LT_V8HI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_lt_v8hi, exp);
++    case S2PP_BUILTIN_FXVSTAX_LT_V16QI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_lt_v16qi, exp);
++    case S2PP_BUILTIN_FXVSTAX_EQ_V8HI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_eq_v8hi, exp);
++    case S2PP_BUILTIN_FXVSTAX_EQ_V16QI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_eq_v16qi, exp);
++
++    case S2PP_BUILTIN_FXVOUTX_V8HI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_v8hi, exp);
++    case S2PP_BUILTIN_FXVOUTX_V16QI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_v16qi, exp);
++    case S2PP_BUILTIN_FXVOUTX_GT_V8HI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_gt_v8hi, exp);
++    case S2PP_BUILTIN_FXVOUTX_GT_V16QI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_gt_v16qi, exp);
++    case S2PP_BUILTIN_FXVOUTX_LT_V8HI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_lt_v8hi, exp);
++    case S2PP_BUILTIN_FXVOUTX_LT_V16QI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_lt_v16qi, exp);
++    case S2PP_BUILTIN_FXVOUTX_EQ_V8HI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_eq_v8hi, exp);
++    case S2PP_BUILTIN_FXVOUTX_EQ_V16QI:
++      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_eq_v16qi, exp);
++
++    case S2PP_BUILTIN_VEC_INIT_V8HI:
++    case S2PP_BUILTIN_VEC_INIT_V16QI:
++      return s2pp_expand_vec_init_builtin (TREE_TYPE (exp), exp, target);
++
++    case S2PP_BUILTIN_VEC_SET_V8HI:
++    case S2PP_BUILTIN_VEC_SET_V16QI:
++      return s2pp_expand_vec_set_builtin (exp);
++
++    case S2PP_BUILTIN_VEC_EXT_V8HI:
++    case S2PP_BUILTIN_VEC_EXT_V16QI:
++      return s2pp_expand_vec_ext_builtin (exp, target);
++
++    case S2PP_BUILTIN_FXVCMPB:
++      return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvcmpb, exp);
++    case S2PP_BUILTIN_FXVCMPH:
++      return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvcmph, exp);
++    case S2PP_BUILTIN_FXVMTACB:
++      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmtacb, exp);
++    case S2PP_BUILTIN_FXVMTACH:
++      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmtach, exp);
++    case S2PP_BUILTIN_FXVMTACBF:
++      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmtacbf, exp);
++    case S2PP_BUILTIN_FXVMTACHF:
++      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmtachf, exp);
++    case S2PP_BUILTIN_FXVADDACTACBM:
++      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvaddactacbm, exp);
++    case S2PP_BUILTIN_FXVADDACTACHM:
++      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvaddactachm, exp);
++    case S2PP_BUILTIN_FXVADDACTACBF:
++      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvaddactacbf, exp);
++    case S2PP_BUILTIN_FXVADDACTACHF:
++      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvaddactachf, exp);
++    case S2PP_BUILTIN_FXVMATACHM:
++      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmatachm, exp);
++    case S2PP_BUILTIN_FXVMATACBM:
++      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmatacbm, exp);
++    case S2PP_BUILTIN_FXVMATACHFS:
++      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmatachfs, exp);
++    case S2PP_BUILTIN_FXVMATACBFS:
++      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmatacbfs, exp);
++    case S2PP_BUILTIN_FXVMULTACHM:
++      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmultachm, exp);
++    case S2PP_BUILTIN_FXVMULTACBM:
++      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmultacbm, exp);
++    case S2PP_BUILTIN_FXVMULTACHFS:
++      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmultachfs, exp);
++    case S2PP_BUILTIN_FXVMULTACBFS:
++      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmultacbfs, exp);
++    case S2PP_BUILTIN_FXVADDTACH:
++      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvaddtach, exp);
++    case S2PP_BUILTIN_FXVADDTACB:
++      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvaddtacb, exp);
++
++    default:
++      break;
++      /* Fall through.  */
++    }
++
++  /* Expand abs* operations.  */
++  /*d = bdesc_abs;
++  for (i = 0; i < ARRAY_SIZE (bdesc_abs); i++, d++)
++    if (d->code == fcode)
++      return s2pp_expand_abs_builtin (d->icode, exp, target);
++*/
++  /* Expand the AltiVec predicates.  */
++  /*d = bdesc_s2pp_preds;
++  for (i = 0; i < ARRAY_SIZE (bdesc_s2pp_preds); i++, d++)
++    if (d->code == fcode)
++      return s2pp_expand_predicate_builtin (d->icode, exp, target);
++*/
++  /* LV* are funky.  We initialized them differently.  */
++  switch (fcode)
++    {
++//    case S2PP_BUILTIN_LAX:
++    case S2PP_BUILTIN_FXVLAX_V8HI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_v8hi,exp, target, false);
++    case S2PP_BUILTIN_FXVLAX_V16QI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_v16qi,exp, target, false);
++    case S2PP_BUILTIN_FXVLAX_GT_V8HI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_gt_v8hi,exp, target, false);
++    case S2PP_BUILTIN_FXVLAX_GT_V16QI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_gt_v16qi,exp, target, false);
++    case S2PP_BUILTIN_FXVLAX_LT_V8HI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_lt_v8hi,exp, target, false);
++    case S2PP_BUILTIN_FXVLAX_LT_V16QI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_lt_v16qi,exp, target, false);
++    case S2PP_BUILTIN_FXVLAX_EQ_V8HI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_eq_v8hi,exp, target, false);
++    case S2PP_BUILTIN_FXVLAX_EQ_V16QI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_eq_v16qi,exp, target, false);
++
++    case S2PP_BUILTIN_FXVINX_V8HI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_v8hi,exp, target, false);
++    case S2PP_BUILTIN_FXVINX_V16QI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_v16qi,exp, target, false);
++    case S2PP_BUILTIN_FXVINX_GT_V8HI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_gt_v8hi,exp, target, false);
++    case S2PP_BUILTIN_FXVINX_GT_V16QI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_gt_v16qi,exp, target, false);
++    case S2PP_BUILTIN_FXVINX_LT_V8HI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_lt_v8hi,exp, target, false);
++    case S2PP_BUILTIN_FXVINX_LT_V16QI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_lt_v16qi,exp, target, false);
++    case S2PP_BUILTIN_FXVINX_EQ_V8HI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_eq_v8hi,exp, target, false);
++    case S2PP_BUILTIN_FXVINX_EQ_V16QI:
++      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_eq_v16qi,exp, target, false);
++    default:
++      break;
++      /* Fall through.  */
++    }
++
++  *expandedp = false;
++  return NULL_RTX;
++}
++
++
+ /* Expand the builtin in EXP and store the result in TARGET.  Store
+    true in *EXPANDEDP if we found a builtin to expand.  */
+ static rtx
+@@ -13941,6 +14882,45 @@ rs6000_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
+ 	}
+       break;
+ 
++    case S2PP_BUILTIN_MASK_FOR_LOAD:
++    case S2PP_BUILTIN_MASK_FOR_STORE:
++      {
++	int icode = CODE_FOR_s2pp_fxvlax_direct;
++	enum machine_mode tmode = insn_data[icode].operand[0].mode;
++	enum machine_mode mode = insn_data[icode].operand[1].mode;
++	tree arg;
++	rtx op, addr, pat;
++
++	gcc_assert (TARGET_S2PP);
++
++	arg = CALL_EXPR_ARG (exp, 0);
++	gcc_assert (POINTER_TYPE_P (TREE_TYPE (arg)));
++	op = expand_expr (arg, NULL_RTX, Pmode, EXPAND_NORMAL);
++	addr = memory_address (mode, op);
++	if (fcode == S2PP_BUILTIN_MASK_FOR_STORE)
++	  op = addr;
++	else
++	  {
++	    /* For the load case need to negate the address.  */
++	    op = gen_reg_rtx (GET_MODE (addr));
++	    emit_insn (gen_rtx_SET (VOIDmode, op,
++				    gen_rtx_NEG (GET_MODE (addr), addr)));
++	  }
++	op = gen_rtx_MEM (mode, op);
++
++	if (target == 0
++	    || GET_MODE (target) != tmode
++	    || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
++	  target = gen_reg_rtx (tmode);
++
++	pat = GEN_FCN (icode) (target, op);
++	if (!pat)
++	  return 0;
++	emit_insn (pat);
++
++	return target;
++      }
++
+     default:
+       break;
+     }
+@@ -13952,6 +14932,14 @@ rs6000_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
+       if (success)
+ 	return ret;
+     }
++
++  if (TARGET_S2PP)
++    {
++      ret = s2pp_expand_builtin (exp, target, &success);
++
++      if (success)
++	return ret;
++    }
+   if (TARGET_SPE)
+     {
+       ret = spe_expand_builtin (exp, target, &success);
+ 
+diff --git a/rs6000.h b/rs6000.h
+index 1e1c9f4..fadebb0 100644
+--- a/rs6000.h
++++ b/rs6000.h
+ 
+ /* E500 cores only support plain "sync", not lwsync.  */
+@@ -706,7 +706,10 @@ extern unsigned char rs6000_recip_bits[];
+ #define REGISTER_TARGET_PRAGMAS() do {				\
+   c_register_pragma (0, "longcall", rs6000_pragma_longcall);	\
+   targetm.target_option.pragma_parse = rs6000_pragma_target_parse; \
+-  targetm.resolve_overloaded_builtin = altivec_resolve_overloaded_builtin; \
++  if(OPTION_MASK_S2PP) \
++    targetm.resolve_overloaded_builtin = s2pp_resolve_overloaded_builtin; \
++  else \
++    targetm.resolve_overloaded_builtin = altivec_resolve_overloaded_builtin; \
+   rs6000_target_modify_macros_ptr = rs6000_target_modify_macros; \
+ } while (0)
+ 
+ /* The same information, inverted:
+    Return the class number of the smallest class containing
+ 
+ 

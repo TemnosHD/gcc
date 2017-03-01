@@ -1,0 +1,662 @@
+ };
+ 
+@@ -14204,12 +15193,16 @@ rs6000_init_builtins (void)
+     paired_init_builtins ();
+   if (TARGET_SPE)
+     spe_init_builtins ();
+-  if (TARGET_EXTRA_BUILTINS)
++  if (TARGET_S2PP) {
++    s2pp_init_builtins ();
++  }
++  if (TARGET_EXTRA_BUILTINS && !TARGET_S2PP){
+     altivec_init_builtins ();
++  }
+   if (TARGET_HTM)
+     htm_init_builtins ();
+ 
+-  if (TARGET_EXTRA_BUILTINS || TARGET_SPE || TARGET_PAIRED_FLOAT)
++  if (TARGET_EXTRA_BUILTINS || TARGET_SPE || TARGET_PAIRED_FLOAT || TARGET_S2PP)
+     rs6000_common_init_builtins ();
+ 
+   ftype = builtin_function_type (DFmode, DFmode, DFmode, VOIDmode,
++
++static void
++s2pp_init_builtins (void)
++{
++  //const struct builtin_description *d;
++  //size_t i;
++  tree ftype;
++  tree decl;
++
++  tree pvoid_type_node = build_pointer_type (void_type_node);
++
++  tree pcvoid_type_node
++    = build_pointer_type (build_qualified_type (void_type_node,
++						TYPE_QUAL_CONST));
++
++  tree opaque_ftype_opaque
++    = build_function_type_list (integer_type_node, NULL_TREE);
++  
++  tree int_ftype_opaque
++    = build_function_type_list (integer_type_node,
++				opaque_V4SI_type_node, NULL_TREE);
++  //tree int_ftype_int_opaque_opaque
++    //= build_function_type_list (integer_type_node,
++                                //integer_type_node, opaque_V4SI_type_node,
++                                //opaque_V4SI_type_node, NULL_TREE);
++  //tree v8hi_ftype_void
++    //= build_function_type_list (V8HI_type_node, NULL_TREE);
++  //tree void_ftype_void
++    //= build_function_type_list (void_type_node, NULL_TREE);
++  //tree void_ftype_int
++    //= build_function_type_list (void_type_node, integer_type_node, NULL_TREE);
++
++  tree v16qi_ftype_long_pcvoid
++    = build_function_type_list (V16QI_type_node,
++				long_integer_type_node, pcvoid_type_node,
++				NULL_TREE);
++  tree v16qi_ftype_long_long
++    = build_function_type_list (V16QI_type_node,
++				long_integer_type_node, long_integer_type_node,
++				NULL_TREE);
++  tree v8hi_ftype_long_pcvoid
++    = build_function_type_list (V8HI_type_node,
++				long_integer_type_node, pcvoid_type_node,
++				NULL_TREE);
++  tree v8hi_ftype_long_long
++    = build_function_type_list (V8HI_type_node,
++				long_integer_type_node, long_integer_type_node,
++				NULL_TREE);
++  tree void_ftype_v16qi_long_pvoid
++    = build_function_type_list (void_type_node,
++				V16QI_type_node, long_integer_type_node,
++				pvoid_type_node, NULL_TREE);
++  tree void_ftype_v16qi_long_long
++    = build_function_type_list (void_type_node,
++				V16QI_type_node, long_integer_type_node,
++				long_integer_type_node, NULL_TREE);
++  tree void_ftype_v8hi_long_pvoid
++    = build_function_type_list (void_type_node,
++				V8HI_type_node, long_integer_type_node,
++				pvoid_type_node, NULL_TREE);
++  tree void_ftype_v8hi_long_long
++    = build_function_type_list (void_type_node,
++				V8HI_type_node, long_integer_type_node,
++				long_integer_type_node, NULL_TREE);
++  //tree int_ftype_int_v8hi_v8hi
++    //= build_function_type_list (integer_type_node,
++				//integer_type_node, V8HI_type_node,
++				//V8HI_type_node, NULL_TREE);
++  //tree int_ftype_int_v16qi_v16qi
++    //= build_function_type_list (integer_type_node,
++				//integer_type_node, V16QI_type_node,
++				//V16QI_type_node, NULL_TREE);
++  //tree v8hi_ftype_v8hi
++    //= build_function_type_list (V8HI_type_node, V8HI_type_node, NULL_TREE);
++  //tree v16qi_ftype_v16qi
++    //= build_function_type_list (V16QI_type_node, V16QI_type_node, NULL_TREE);
++  //tree void_ftype_pcvoid_int_int
++    //= build_function_type_list (void_type_node,
++				//pcvoid_type_node, integer_type_node,
++				//integer_type_node, NULL_TREE);
++  tree opaque_ftype_long_pcvoid
++    = build_function_type_list (opaque_V4SI_type_node,
++				long_integer_type_node, pcvoid_type_node,
++				NULL_TREE);
++  tree opaque_ftype_long_pvoid
++    = build_function_type_list (opaque_V4SI_type_node,
++				long_integer_type_node, pvoid_type_node,
++				NULL_TREE);
++  //tree opaque_ftype_long_long
++    //= build_function_type_list (opaque_V4SI_type_node,
++				//long_integer_type_node, long_integer_type_node,
++				//NULL_TREE);
++  tree void_ftype_opaque_long_pvoid
++    = build_function_type_list (void_type_node,
++				opaque_V4SI_type_node, long_integer_type_node,
++				pvoid_type_node, NULL_TREE);
++  //tree void_ftype_opaque_long_long
++    //= build_function_type_list (void_type_node,
++				//opaque_V4SI_type_node, long_integer_type_node,
++				//long_integer_type_node, NULL_TREE);
++  tree opaque_ftype_opaque_int
++    = build_function_type_list (opaque_V4SI_type_node,
++				opaque_V4SI_type_node, integer_type_node, NULL_TREE);
++  tree opaque_ftype_opaque_opaque_int
++    = build_function_type_list (opaque_V4SI_type_node,
++				opaque_V4SI_type_node, opaque_V4SI_type_node,
++				integer_type_node, NULL_TREE);
++  tree void_ftype_v8hi
++    = build_function_type_list (void_type_node, V8HI_type_node, NULL_TREE);
++  tree void_ftype_v16qi
++    = build_function_type_list (void_type_node, V16QI_type_node, NULL_TREE);
++
++  tree void_ftype_v8hi_int
++    = build_function_type_list (void_type_node, V8HI_type_node, integer_type_node, NULL_TREE);
++  tree void_ftype_v16qi_int
++    = build_function_type_list (void_type_node, V16QI_type_node, integer_type_node, NULL_TREE);
++  tree void_ftype_opaque_int
++    = build_function_type_list (void_type_node, opaque_V4SI_type_node, integer_type_node, NULL_TREE);
++
++  tree void_ftype_v8hi_v8hi_int
++    = build_function_type_list (void_type_node, V8HI_type_node, V8HI_type_node, integer_type_node, NULL_TREE);
++  tree void_ftype_v16qi_v16qi_int
++    = build_function_type_list (void_type_node, V16QI_type_node, V16QI_type_node, integer_type_node, NULL_TREE);
++  tree void_ftype_opaque_opaque_int
++    = build_function_type_list (void_type_node, opaque_V4SI_type_node, opaque_V4SI_type_node, integer_type_node, NULL_TREE);
++
++  def_builtin ("__builtin_s2pp_fxvlax_v8hi", v8hi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVLAX_V8HI);
++  def_builtin ("__builtin_s2pp_fxvlax_v16qi", v16qi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVLAX_V16QI);
++  def_builtin ("__builtin_s2pp_fxvstax_v8hi", void_ftype_v8hi_long_pvoid,
++	       S2PP_BUILTIN_FXVSTAX_V8HI);
++  def_builtin ("__builtin_s2pp_fxvstax_v16qi", void_ftype_v16qi_long_pvoid,
++	       S2PP_BUILTIN_FXVSTAX_V16QI);
++  def_builtin ("__builtin_vec_ld", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_LD);
++  def_builtin ("__builtin_vec_st", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_ST);
++  def_builtin ("__builtin_s2pp_fxvlax_gt_v8hi", v8hi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVLAX_GT_V8HI);
++  def_builtin ("__builtin_s2pp_fxvlax_gt_v16qi", v16qi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVLAX_GT_V16QI);
++  def_builtin ("__builtin_s2pp_fxvstax_gt_v8hi", void_ftype_v8hi_long_pvoid,
++	       S2PP_BUILTIN_FXVSTAX_GT_V8HI);
++  def_builtin ("__builtin_s2pp_fxvstax_gt_v16qi", void_ftype_v16qi_long_pvoid,
++	       S2PP_BUILTIN_FXVSTAX_GT_V16QI);
++  def_builtin ("__builtin_vec_ld_gt", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_LD_GT);
++  def_builtin ("__builtin_vec_st_gt", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_ST_GT);
++  def_builtin ("__builtin_s2pp_fxvlax_lt_v8hi", v8hi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVLAX_LT_V8HI);
++  def_builtin ("__builtin_s2pp_fxvlax_lt_v16qi", v16qi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVLAX_LT_V16QI);
++  def_builtin ("__builtin_s2pp_fxvstax_lt_v8hi", void_ftype_v8hi_long_pvoid,
++	       S2PP_BUILTIN_FXVSTAX_LT_V8HI);
++  def_builtin ("__builtin_s2pp_fxvstax_lt_v16qi", void_ftype_v16qi_long_pvoid,
++	       S2PP_BUILTIN_FXVSTAX_LT_V16QI);
++  def_builtin ("__builtin_vec_ld_lt", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_LD_LT);
++  def_builtin ("__builtin_vec_st_lt", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_ST_LT);
++  def_builtin ("__builtin_s2pp_fxvlax_eq_v8hi", v8hi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVLAX_EQ_V8HI);
++  def_builtin ("__builtin_s2pp_fxvlax_eq_v16qi", v16qi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVLAX_EQ_V16QI);
++  def_builtin ("__builtin_s2pp_fxvstax_eq_v8hi", void_ftype_v8hi_long_pvoid,
++	       S2PP_BUILTIN_FXVSTAX_EQ_V8HI);
++  def_builtin ("__builtin_s2pp_fxvstax_eq_v16qi", void_ftype_v16qi_long_pvoid,
++	       S2PP_BUILTIN_FXVSTAX_EQ_V16QI);
++  def_builtin ("__builtin_vec_ld_eq", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_LD_EQ);
++  def_builtin ("__builtin_vec_st_eq", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_ST_EQ);
++
++  def_builtin ("__builtin_s2pp_fxvinx_v8hi", v8hi_ftype_long_long,
++	       S2PP_BUILTIN_FXVINX_V8HI);
++  def_builtin ("__builtin_s2pp_fxvinx_v16qi", v16qi_ftype_long_long,
++	       S2PP_BUILTIN_FXVINX_V16QI);
++  def_builtin ("__builtin_s2pp_fxvoutx_v8hi", void_ftype_v8hi_long_long,
++	       S2PP_BUILTIN_FXVOUTX_V8HI);
++  def_builtin ("__builtin_s2pp_fxvoutx_v16qi", void_ftype_v16qi_long_long,
++	       S2PP_BUILTIN_FXVOUTX_V16QI);
++  def_builtin ("__builtin_vec_in", opaque_ftype_long_pvoid, S2PP_BUILTIN_VEC_IN);
++  def_builtin ("__builtin_vec_out", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_OUT);
++  def_builtin ("__builtin_s2pp_fxvinx_gt_v8hi", v8hi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVINX_GT_V8HI);
++  def_builtin ("__builtin_s2pp_fxvinx_gt_v16qi", v16qi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVINX_GT_V16QI);
++  def_builtin ("__builtin_s2pp_fxvoutx_gt_v8hi", void_ftype_v8hi_long_pvoid,
++	       S2PP_BUILTIN_FXVOUTX_GT_V8HI);
++  def_builtin ("__builtin_s2pp_fxvoutx_gt_v16qi", void_ftype_v16qi_long_pvoid,
++	       S2PP_BUILTIN_FXVOUTX_GT_V16QI);
++  def_builtin ("__builtin_vec_in_gt", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_IN_GT);
++  def_builtin ("__builtin_vec_out_gt", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_OUT_GT);
++  def_builtin ("__builtin_s2pp_fxvinx_lt_v8hi", v8hi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVINX_LT_V8HI);
++  def_builtin ("__builtin_s2pp_fxvinx_lt_v16qi", v16qi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVINX_LT_V16QI);
++  def_builtin ("__builtin_s2pp_fxvoutx_lt_v8hi", void_ftype_v8hi_long_pvoid,
++	       S2PP_BUILTIN_FXVOUTX_LT_V8HI);
++  def_builtin ("__builtin_s2pp_fxvoutx_lt_v16qi", void_ftype_v16qi_long_pvoid,
++	       S2PP_BUILTIN_FXVOUTX_LT_V16QI);
++  def_builtin ("__builtin_vec_in_lt", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_IN_LT);
++  def_builtin ("__builtin_vec_out_lt", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_OUT_LT);
++  def_builtin ("__builtin_s2pp_fxvinx_eq_v8hi", v8hi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVINX_EQ_V8HI);
++  def_builtin ("__builtin_s2pp_fxvinx_eq_v16qi", v16qi_ftype_long_pcvoid,
++	       S2PP_BUILTIN_FXVINX_EQ_V16QI);
++  def_builtin ("__builtin_s2pp_fxvoutx_eq_v8hi", void_ftype_v8hi_long_pvoid,
++	       S2PP_BUILTIN_FXVOUTX_EQ_V8HI);
++  def_builtin ("__builtin_s2pp_fxvoutx_eq_v16qi", void_ftype_v16qi_long_pvoid,
++	       S2PP_BUILTIN_FXVOUTX_EQ_V16QI);
++  def_builtin ("__builtin_vec_in_eq", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_IN_EQ);
++  def_builtin ("__builtin_vec_out_eq", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_OUT_EQ);
++
++
++  def_builtin ("__builtin_vec_step", int_ftype_opaque, S2PP_BUILTIN_VEC_STEP);
++  def_builtin ("__builtin_vec_splats", opaque_ftype_opaque, S2PP_BUILTIN_VEC_SPLATS);
++  def_builtin ("__builtin_vec_promote", opaque_ftype_opaque, S2PP_BUILTIN_VEC_PROMOTE);
++
++  def_builtin ("__builtin_vec_splat", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_SPLAT);
++  def_builtin ("__builtin_vec_extract", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_EXTRACT);
++  def_builtin ("__builtin_vec_insert", opaque_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_INSERT);
++
++  def_builtin ("__builtin_s2pp_fxvcmpb", void_ftype_v16qi, S2PP_BUILTIN_FXVCMPB);
++  def_builtin ("__builtin_s2pp_fxvcmph", void_ftype_v8hi, S2PP_BUILTIN_FXVCMPH);
++
++  def_builtin ("__builtin_s2pp_fxvmtacb", void_ftype_v16qi_int, S2PP_BUILTIN_FXVMTACB);
++  def_builtin ("__builtin_s2pp_fxvmtach", void_ftype_v8hi_int, S2PP_BUILTIN_FXVMTACH);
++  def_builtin ("__builtin_s2pp_fxvmtacbf", void_ftype_v16qi_int, S2PP_BUILTIN_FXVMTACBF);
++  def_builtin ("__builtin_s2pp_fxvmtachf", void_ftype_v8hi_int, S2PP_BUILTIN_FXVMTACHF);
++  def_builtin ("__builtin_vec_fxvmtac", void_ftype_opaque_int, S2PP_BUILTIN_VEC_FXVMTAC);
++  def_builtin ("__builtin_vec_fxvmtacf", void_ftype_opaque_int, S2PP_BUILTIN_VEC_FXVMTACF);
++  def_builtin ("__builtin_vec_fxvmtacb", void_ftype_v16qi_int, S2PP_BUILTIN_VEC_FXVMTACB);
++  def_builtin ("__builtin_vec_fxvmtacbf", void_ftype_v16qi_int, S2PP_BUILTIN_VEC_FXVMTACBF);
++  def_builtin ("__builtin_vec_fxvmtach", void_ftype_v8hi_int, S2PP_BUILTIN_VEC_FXVMTACH);
++  def_builtin ("__builtin_vec_fxvmtachf", void_ftype_v8hi_int, S2PP_BUILTIN_VEC_FXVMTACHF);
++
++  def_builtin ("__builtin_s2pp_fxvaddactacbm", void_ftype_v16qi_int, S2PP_BUILTIN_FXVADDACTACBM);
++  def_builtin ("__builtin_s2pp_fxvaddactachm", void_ftype_v8hi_int, S2PP_BUILTIN_FXVADDACTACHM);
++  def_builtin ("__builtin_s2pp_fxvaddactacbf", void_ftype_v16qi_int, S2PP_BUILTIN_FXVADDACTACBF);
++  def_builtin ("__builtin_s2pp_fxvaddactachf", void_ftype_v8hi_int, S2PP_BUILTIN_FXVADDACTACHF);
++  def_builtin ("__builtin_vec_fxvaddactacm", void_ftype_opaque_int, S2PP_BUILTIN_VEC_FXVADDACTACM);
++  def_builtin ("__builtin_vec_fxvaddactacf", void_ftype_opaque_int, S2PP_BUILTIN_VEC_FXVADDACTACF);
++  def_builtin ("__builtin_vec_fxvaddactacbm", void_ftype_v16qi_int, S2PP_BUILTIN_VEC_FXVADDACTACBM);
++  def_builtin ("__builtin_vec_fxvaddactacbf", void_ftype_v16qi_int, S2PP_BUILTIN_VEC_FXVADDACTACBF);
++  def_builtin ("__builtin_vec_fxvaddactachm", void_ftype_v8hi_int, S2PP_BUILTIN_VEC_FXVADDACTACHM);
++  def_builtin ("__builtin_vec_fxvaddactachf", void_ftype_v8hi_int, S2PP_BUILTIN_VEC_FXVADDACTACHF);
++
++  def_builtin ("__builtin_s2pp_fxvmatacbm", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_FXVMATACBM);
++  def_builtin ("__builtin_s2pp_fxvmatachm", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_FXVMATACHM);
++  def_builtin ("__builtin_s2pp_fxvmatacbfs", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_FXVMATACBFS);
++  def_builtin ("__builtin_s2pp_fxvmatachfs", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_FXVMATACHFS);
++  def_builtin ("__builtin_vec_fxvmatacm", void_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_FXVMATACM);
++  def_builtin ("__builtin_vec_fxvmatacfs", void_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_FXVMATACFS);
++  def_builtin ("__builtin_vec_fxvmatacbm", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_VEC_FXVMATACBM);
++  def_builtin ("__builtin_vec_fxvmatacbfs", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_VEC_FXVMATACBFS);
++  def_builtin ("__builtin_vec_fxvmatachm", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_VEC_FXVMATACHM);
++  def_builtin ("__builtin_vec_fxvmatachfs", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_VEC_FXVMATACHFS);
++
++  def_builtin ("__builtin_s2pp_fxvmultacbm", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_FXVMULTACBM);
++  def_builtin ("__builtin_s2pp_fxvmultachm", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_FXVMULTACHM);
++  def_builtin ("__builtin_s2pp_fxvmultacbfs", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_FXVMULTACBFS);
++  def_builtin ("__builtin_s2pp_fxvmultachfs", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_FXVMULTACHFS);
++  def_builtin ("__builtin_vec_fxvmultacm", void_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_FXVMULTACM);
++  def_builtin ("__builtin_vec_fxvmultacfs", void_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_FXVMULTACFS);
++  def_builtin ("__builtin_vec_fxvmultacbm", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_VEC_FXVMULTACBM);
++  def_builtin ("__builtin_vec_fxvmultacbfs", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_VEC_FXVMULTACBFS);
++  def_builtin ("__builtin_vec_fxvmultachm", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_VEC_FXVMULTACHM);
++  def_builtin ("__builtin_vec_fxvmultachfs", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_VEC_FXVMULTACHFS);
++
++  def_builtin ("__builtin_s2pp_fxvaddtacb", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_FXVADDTACB);
++  def_builtin ("__builtin_s2pp_fxvaddtach", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_FXVADDTACH);
++  def_builtin ("__builtin_vec_fxvaddtac", void_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_FXVADDTAC);
++  def_builtin ("__builtin_vec_fxvaddtacb", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_VEC_FXVADDTACB);
++  def_builtin ("__builtin_vec_fxvaddtach", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_VEC_FXVADDTACH);
++
++
++  /* Add the DST variants.  */
++//  d = bdesc_dst;
++//  for (i = 0; i < ARRAY_SIZE (bdesc_dst); i++, d++)
++//    def_builtin (d->name, void_ftype_pcvoid_int_int, d->code);
++
++  /* Initialize the predicates.  */
++/*  d = bdesc_s2pp_preds;
++  for (i = 0; i < ARRAY_SIZE (bdesc_s2pp_preds); i++, d++)
++    {
++      enum machine_mode mode1;
++      tree type;
++
++      if (rs6000_overloaded_builtin_p (d->code))
++	mode1 = VOIDmode;
++      else
++	mode1 = insn_data[d->icode].operand[1].mode;
++
++      switch (mode1)
++	{
++	case VOIDmode:
++	  type = int_ftype_int_opaque_opaque;
++	  break;
++	case V8HImode:
++	  type = int_ftype_int_v8hi_v8hi;
++	  break;
++	case V16QImode:
++	  type = int_ftype_int_v16qi_v16qi;
++	  break;
++	default:
++	  gcc_unreachable ();
++	}
++
++      def_builtin (d->name, type, d->code);
++    }
++*/
++  /* Initialize the abs* operators.  */
++/*  d = bdesc_abs;
++  for (i = 0; i < ARRAY_SIZE (bdesc_abs); i++, d++)
++    {
++      enum machine_mode mode0;
++      tree type;
++
++      mode0 = insn_data[d->icode].operand[0].mode;
++
++      switch (mode0)
++	{
++	case V8HImode:
++	  type = v8hi_ftype_v8hi;
++	  break;
++	case V16QImode:
++	  type = v16qi_ftype_v16qi;
++	  break;
++	default:
++	  gcc_unreachable ();
++	}
++
++      def_builtin (d->name, type, d->code);
++    }
++*/
++  /* Initialize target builtin that implements
++     targetm.vectorize.builtin_mask_for_load.  */
++
++  decl = add_builtin_function ("__builtin_s2pp_mask_for_load",
++			       v16qi_ftype_long_pcvoid,
++			       S2PP_BUILTIN_MASK_FOR_LOAD,
++			       BUILT_IN_MD, NULL, NULL_TREE);
++  TREE_READONLY (decl) = 1;
++ /* Record the decl. Will be used by rs6000_builtin_mask_for_load.  */
++  s2pp_builtin_mask_for_load = decl;
++
++  /* Access to the vec_init patterns.  */
++  ftype = build_function_type_list (V8HI_type_node, short_integer_type_node,
++				    short_integer_type_node,
++				    short_integer_type_node,
++				    short_integer_type_node,
++				    short_integer_type_node,
++				    short_integer_type_node,
++				    short_integer_type_node,
++				    short_integer_type_node, NULL_TREE);
++  def_builtin ("__builtin_vec_init_v8hi", ftype, S2PP_BUILTIN_VEC_INIT_V8HI);
++
++  ftype = build_function_type_list (V16QI_type_node, char_type_node,
++				    char_type_node, char_type_node,
++				    char_type_node, char_type_node,
++				    char_type_node, char_type_node,
++				    char_type_node, char_type_node,
++				    char_type_node, char_type_node,
++				    char_type_node, char_type_node,
++				    char_type_node, char_type_node,
++				    char_type_node, NULL_TREE);
++  def_builtin ("__builtin_vec_init_v16qi", ftype, S2PP_BUILTIN_VEC_INIT_V16QI);
++
++  /* Access to the vec_set patterns.  */
++  ftype = build_function_type_list (V8HI_type_node, V8HI_type_node,
++				    intHI_type_node,
++				    integer_type_node, NULL_TREE);
++  def_builtin ("__builtin_vec_set_v8hi", ftype, S2PP_BUILTIN_VEC_SET_V8HI);
++
++  ftype = build_function_type_list (V16QI_type_node, V16QI_type_node,
++				    intQI_type_node,
++				    integer_type_node, NULL_TREE);
++  def_builtin ("__builtin_vec_set_v16qi", ftype, S2PP_BUILTIN_VEC_SET_V16QI);
++
++  /* Access to the vec_extract patterns.  */
++  ftype = build_function_type_list (intHI_type_node, V8HI_type_node,
++				    integer_type_node, NULL_TREE);
++  def_builtin ("__builtin_vec_ext_v8hi", ftype, S2PP_BUILTIN_VEC_EXT_V8HI);
++
++  ftype = build_function_type_list (intQI_type_node, V16QI_type_node,
++				    integer_type_node, NULL_TREE);
++  def_builtin ("__builtin_vec_ext_v16qi", ftype, S2PP_BUILTIN_VEC_EXT_V16QI);
+ 
+ }
+ 
++
+ static void
+ htm_init_builtins (void)
+ {
+-#define s2pp_fxvstax __builtin_s2pp_fxvstax
+-#define s2pp_fxvlax __builtin_s2pp_fxvlax
++#define fxv_stax vec_st
++#define vec_st __builtin_vec_st
++#define fxv_lax vec_ld
++#define vec_ld __builtin_vec_ld
++#define fxv_stax_gt vec_st_gt
++#define vec_st_gt __builtin_vec_st_gt
++#define fxv_lax_gt vec_ld_gt
++#define vec_ld_gt __builtin_vec_ld_gt
++#define fxv_stax_lt vec_st_lt
++#define vec_st_lt __builtin_vec_st_lt
++#define fxv_lax_lt vec_ld_lt
++#define vec_ld_lt __builtin_vec_ld_lt
++#define fxv_stax_eq vec_st_eq
++#define vec_st_eq __builtin_vec_st_eq
++#define fxv_lax_eq vec_ld_eq
++#define vec_ld_eq __builtin_vec_ld_eq
++
++#define fxv_in __builtin_vec_in
++#define fxv_out __builtin_vec_out
++#define fxv_in_gt __builtin_vec_in_gt
++#define fxv_out_gt __builtin_vec_out_gt
++#define fxv_in_lt __builtin_vec_in_lt
++#define fxv_out_lt __builtin_vec_out_lt
++#define fxv_in_eq __builtin_vec_in_eq
++#define fxv_out_eq __builtin_vec_out_eq
++
++#define vec_sel(x,y) fxv_sel(x,y,0)
++#define fxv_sel __builtin_vec_fxvsel
++#define fxv_sel_gt(x,y) fxv_sel(x,y,1)
++#define fxv_sel_lt(x,y) fxv_sel(x,y,2)
++#define fxv_sel_eq(x,y) fxv_sel(x,y,3)
++
++#define vec_extract __builtin_vec_extract
++#define vec_insert __builtin_vec_insert
++#define vec_splats __builtin_vec_splats
++#define vec_promote __builtin_vec_promote
++
++#define vec_add fxv_add
++#define fxv_add __builtin_vec_fxvadd
++#define fxv_addfs(x,y) fxv_addfs_c(x,y,0)
++#define vec_sub fxv_sub
++#define fxv_sub __builtin_vec_fxvsub
++#define fxv_subfs(x,y) fxv_subfs_c(x,y,0)
++#define vec_mul fxv_mul
++#define fxv_mul __builtin_vec_fxvmul
++#define fxv_mulfs(x,y) fxv_mulfs_c(x,y,0)
++
++#define fxv_addm_c __builtin_vec_fxvaddm
++#define fxv_addbm_c __builtin_vec_fxvaddbm
++#define fxv_addhm_c __builtin_vec_fxvaddhm
++#define fxv_addfs_c __builtin_vec_fxvaddfs
++#define fxv_addbfs_c __builtin_vec_fxvaddbfs
++#define fxv_addhfs_c __builtin_vec_fxvaddhfs
++#define fxv_subm_c __builtin_vec_fxvsubm
++#define fxv_subbm_c __builtin_vec_fxvsubbm
++#define fxv_subhm_c __builtin_vec_fxvsubhm
++#define fxv_subfs_c __builtin_vec_fxvsubfs
++#define fxv_subbfs_c __builtin_vec_fxvsubbfs
++#define fxv_subhfs_c __builtin_vec_fxvsubhfs
++#define fxv_mulm_c __builtin_vec_fxvmulm
++#define fxv_mulbm_c __builtin_vec_fxvmulbm
++#define fxv_mulhm_c __builtin_vec_fxvmulhm
++#define fxv_mulfs_c __builtin_vec_fxvmulfs
++#define fxv_mulbfs_c __builtin_vec_fxvmulbfs
++#define fxv_mulhfs_c __builtin_vec_fxvmulhfs
++
++#define vec_sh fxv_sh
++#define fxv_sh __builtin_vec_fxvsh
++#define fxv_shb __builtin_vec_fxvshb
++#define fxv_shh __builtin_vec_fxvshh
++#define vec_shl fxv_shl
++#define fxv_shl __builtin_vec_fxvshl
++#define fxv_shlb __builtin_vec_fxvshlb
++#define fxv_shlh __builtin_vec_fxvshlh
++#define vec_shr fxv_shr
++#define fxv_shr __builtin_vec_fxvshr
++#define fxv_shrb __builtin_vec_fxvshrb
++#define fxv_shrh __builtin_vec_fxvshrh
++
++#define fxv_pckbu(x,y) fxv_pckbu_c(x,y,0)
++#define fxv_pckbl(x,y) fxv_pckbl_c(x,y,0)
++#define fxv_upckbl(x,y) fxv_upckbl_c(x,y,0)
++#define fxv_upckbr(x,y) fxv_upckbr_c(x,y,0)
++
++#define fxv_pckbu_c __builtin_vec_fxvpckbu
++#define fxv_pckbl_c __builtin_vec_fxvpckbl
++#define fxv_upckbl_c __builtin_vec_fxvupckbl
++#define fxv_upckbr_c __builtin_vec_fxvupckbr
++
++#define fxv_splath vec_splat_u16
++#define fxv_splatb vec_splat_u8
++#define vec_splat_s16(x) __builtin_s2pp_fxvsplath ((x))
++#define vec_splat_s8(x) __builtin_s2pp_fxvsplatb ((x))
++#define vec_splat_u16(x) ((__vector unsigned short) vec_splat_s16 ((x)))
++#define vec_splat_u8(x) ((__vector unsigned char) vec_splat_s8 ((x)))
++
++#define fxv_cmp __builtin_vec_fxvcmp
++#define fxv_cmpb __builtin_vec_fxvcmpb
++#define fxv_cmph __builtin_vec_fxvcmph
++
++#define fxv_mtac(x) fxv_mtac_c(x,0)
++#define fxv_mtacb(x) fxv_mtacb_c(x,0)
++#define fxv_mtach(x) fxv_mtach_c(x,0)
++#define fxv_mtacf(x) fxv_mtacf_c(x,0)
++#define fxv_mtacbf(x) fxv_mtacbf_c(x,0)
++#define fxv_mtachf(x) fxv_mtachf_c(x,0)
++#define fxv_addactacm(x) fxv_addactacm_c(x,0)
++#define fxv_addactachm(x) fxv_addactachm_c(x,0)
++#define fxv_addactacbm(x) fxv_addactacbm_c(x,0)
++#define fxv_addactacf(x) fxv_addactacf_c(x,0)
++#define fxv_addactachf(x) fxv_addactachf_c(x,0)
++#define fxv_addactacbf(x) fxv_addactacbf_c(x,0)
++
++#define fxv_mtac_c __builtin_vec_fxvmtac
++#define fxv_mtacb_c __builtin_vec_fxvmtacb
++#define fxv_mtach_c __builtin_vec_fxvmtach
++#define fxv_mtacf_c __builtin_vec_fxvmtacf
++#define fxv_mtacbf_c __builtin_vec_fxvmtacbf
++#define fxv_mtachf_c __builtin_vec_fxvmtachf
++#define fxv_addactacm_c __builtin_vec_fxvaddactacm
++#define fxv_addactachm_c __builtin_vec_fxvaddactachm
++#define fxv_addactacbm_c __builtin_vec_fxvaddactacbm
++#define fxv_addactacf_c __builtin_vec_fxvaddactacf
++#define fxv_addactachf_c __builtin_vec_fxvaddactachf
++#define fxv_addactacbf_c __builtin_vec_fxvaddactacbf
++
++#define fxv_addacm(x) fxv_addacm_c(x,0)
++#define fxv_addachm(x) fxv_addachm_c(x,0)
++#define fxv_addacbm(x) fxv_addacbm_c(x,0)
++#define fxv_addacfs(x) fxv_addacfs_c(x,0)
++#define fxv_addachfs(x) fxv_addachfs_c(x,0)
++#define fxv_addacbfs(x) fxv_addacbfs_c(x,0)
++#define fxv_mam(x,y) fxv_mam_c(x,y,0)
++#define fxv_mahm(x,y) fxv_mahm_c(x,y,0)
++#define fxv_mabm(x,y) fxv_mabm_c(x,y,0)
++#define fxv_mafs(x,y) fxv_mafs_c(x,y,0)
++#define fxv_mahfs(x,y) fxv_mahfs_c(x,y,0)
++#define fxv_mabfs(x,y) fxv_mabfs_c(x,y,0)
++
++#define fxv_addacm_c __builtin_vec_fxvaddacm
++#define fxv_addachm_c __builtin_vec_fxvaddachm
++#define fxv_addacbm_c __builtin_vec_fxvaddacbm
++#define fxv_addacfs_c __builtin_vec_fxvaddacfs
++#define fxv_addachfs_c __builtin_vec_fxvaddachfs
++#define fxv_addacbfs_c __builtin_vec_fxvaddacbfs
++#define fxv_mam_c __builtin_vec_fxvmam
++#define fxv_mahm_c __builtin_vec_fxvmahm
++#define fxv_mabm_c __builtin_vec_fxvmabm
++#define fxv_mafs_c __builtin_vec_fxvmafs
++#define fxv_mahfs_c __builtin_vec_fxvmahfs
++#define fxv_mabfs_c __builtin_vec_fxvmabfs
++
++#define fxv_matacm(x,y) fxv_matacm_c(x,y,0)
++#define fxv_matachm(x,y) fxv_matachm_c(x,y,0)
++#define fxv_matacbm(x,y) fxv_matacbm_c(x,y,0)
++#define fxv_matacfs(x,y) fxv_matacfs_c(x,y,0)
++#define fxv_matachfs(x,y) fxv_matachfs_c(x,y,0)
++#define fxv_matacbfs(x,y) fxv_matacbfs_c(x,y,0)
++#define fxv_multacm(x,y) fxv_multacm_c(x,y,0)
++#define fxv_multachm(x,y) fxv_multachm_c(x,y,0)
++#define fxv_multacbm(x,y) fxv_multacbm_c(x,y,0)
++#define fxv_multacfs(x,y) fxv_multacfs_c(x,y,0)
++#define fxv_multachfs(x,y) fxv_multachfs_c(x,y,0)
++#define fxv_multacbfs(x,y) fxv_multacbfs_c(x,y,0)
++#define fxv_addtac(x,y) fxv_addtac_c(x,y,0)
++#define fxv_addtach(x,y) fxv_addtach_c(x,y,0)
++#define fxv_addtacb(x,y) fxv_addtacb_c(x,y,0)
++
++#define fxv_matacm_c __builtin_vec_fxvmatacm
++#define fxv_matachm_c __builtin_vec_fxvmatachm
++#define fxv_matacbm_c __builtin_vec_fxvmatacbm
++#define fxv_matacfs_c __builtin_vec_fxvmatacfs
++#define fxv_matachfs_c __builtin_vec_fxvmatachfs
++#define fxv_matacbfs_c __builtin_vec_fxvmatacbfs
++#define fxv_multacm_c __builtin_vec_fxvmultacm
++#define fxv_multachm_c __builtin_vec_fxvmultachm
++#define fxv_multacbm_c __builtin_vec_fxvmultacbm
++#define fxv_multacfs_c __builtin_vec_fxvmultacfs
++#define fxv_multachfs_c __builtin_vec_fxvmultachfs
++#define fxv_multacbfs_c __builtin_vec_fxvmultacbfs
++#define fxv_addtac_c __builtin_vec_fxvaddtac
++#define fxv_addtach_c __builtin_vec_fxvaddtach
++#define fxv_addtacb_c __builtin_vec_fxvaddtacb
++
++///* Given the vec_step of a type, return the corresponding bool type.  */
++//template <int STEP> class __s2pp_bool_ret { };
++//template <> class __s2pp_bool_ret <4> {
++//  typedef __vector __bool int __ret;
++//};
++//template <> class __s2pp_bool_ret <8> {
++//  typedef __vector __bool short __ret;
++//};
++//template <> class __s2pp_bool_ret <16> {
++//  typedef __vector __bool char __ret;
++//};
++
++
++static uint32_t const __FXVIO_WEIGHT_BASE   = 0x0000;
++static uint32_t const __FXVIO_DECODER_BASE  = 0x4000;
++static uint32_t const __FXVIO_CAUSAL_BASE   = 0x8000;
++static uint32_t const __FXVIO_VRESET_C_BASE = 0x9000;
++static uint32_t const __FXVIO_ACAUSAL_BASE  = 0xc000;
++static uint32_t const __FXVIO_VRESET_A_BASE = 0xd000;
++
++static uint32_t const __FXVIO_LOCATION_MASK      = 0x000fff;
++static uint32_t const __FXVIO_TEST_MASK          = 0x100000;
++static uint32_t const __FXVIO_BUFFER_ENABLE_MASK = 0x200000;
++
++static uint32_t const __SPIKE_BASE_ADDR = (0x3c000040 << 2);
++static uint32_t const __DECODER_BASE_ADDR = (0x20014000 << 2);
++
++#define cadc_load_causal(vec, addr) vec = fxv_inx(__FXVIO_CAUSAL_BASE, addr)
++#define cadc_load_acausal(vec, addr) vec = fxv_inx(__FXVIO_ACAUSAL_BASE, addr)
++#define cadc_load_causal_buffered(vec, addr) vec = fxv_inx(__FXVIO_CAUSAL_BASE || __FXVIO_BUFFER_ENABLE_MASK, addr)
++#define cadc_load_acausal_buffered(vec, addr) vec = fxv_inx(__FXVIO_ACAUSAL_BASE || __FXVIO_BUFFER_ENABLE_MASK, addr)
++#define cadc_test_load_causal(vec, addr) vec = fxv_inx(__FXVIO_CAUSAL_BASE | __FXVIO_TEST_MASK, addr)
++#define cadc_test_load_acausal(vec, addr) vec = fxv_inx(__FXVIO_ACAUSAL_BASE | __FXVIO_TEST_MASK, addr)
++#define cadc_load_vreset_c(vec, addr) vec = fxv_inx(__FXVIO_VRESET_C_BASE, addr)
++#define cadc_load_vreset_a(vec, addr) vec = fxv_inx(__FXVIO_VRESET_A_BASE, addr)
++#define cadc_load_vreset_c_buffered(vec, addr) vec = fxv_inx(__FXVIO_VRESET_C_BASE || __FXVIO_BUFFER_ENABLE_MASK, addr)
++#define cadc_load_vreset_a_buffered(vec, addr) vec = fxv_inx(__FXVIO_VRESET_A_BASE || __FXVIO_BUFFER_ENABLE_MASK, addr)
++
++#define _cadc_load_row(ap0, am0, ap1, am1, addr, buffer_enable) do {\
++	\
++	ap0 = fxv_inx(__FXVIO_CAUSAL_BASE | (buffer_enable), addr)\
++	am0 = fxv_inx(__FXVIO_ACAUSAL_BASE | __FXVIO_BUFFER_ENABLE_MASK), addr)\
++	++addr;\
++	ap1 = fxv_inx(__FXVIO_CAUSAL_BASE | __FXVIO_BUFFER_ENABLE_MASK), addr)\
++	am1 = fxv_inx(__FXVIO_ACAUSAL_BASE | __FXVIO_BUFFER_ENABLE_MASK), addr)\
++	--addr;\
++} while(0)
+ 
+-#define s2pp_fxvaddbm __builtin_s2pp_fxvaddbm
+-#define s2pp_fxvaddhm __builtin_s2pp_fxvaddhm
++#define cadc_load_row(a, b, c, d, e) _cadc_load_row(a, b, c, d, e, 0)
++#define cadc_load_row_buffered(a, b, c, d, e) _cadc_load_row(a, b, c, d, e, __FXVIO_BUFFER_ENABLE_MASK)
++#define cadc_test_load_row(a, b, c, d, e) _cadc_load_row(a, b, c, d, e, __FXVIO_BUFFER_ENABLE_MASK | __FXVIO_TEST_MASK)
++#define cadc_test_load_row_buffered(a, b, c, d, e) _cadc_load_row(a, b, c, d, e, __FXVIO_BUFFER_ENABLE_MASK | __FXVIO_TEST_MASK)
+ 
++#define fxv_shin(offset, address) fxv_shr(__builtin_vec_shin(offset, address)
++#define fxv_shout(vec, offset, address) fxv_out(fxv_sh(vec, -2), offset, address)
++#define fxv_shin_gt(offset, address) fxv_sh(fxv_in_gt(offset, address), 2)
++#define fxv_shout_gt(vec, offset, address) fxv_out_gt(fxv_sh(vec, -2), offset, address)
++#define fxv_shin_lt(offset, address) fxv_sh(fxv_in_lt(offset, address)m 2)
++#define fxv_shout_lt(vec, offset, address) fxv_out_lt(fxv_sh(vec, -2), offset, address)
++#define fxv_shin_eq(offset, address) fxv_sh(fxv_in_eq(offset, address), 2)
++#define fxv_shout_eq(vec, offset, address) fxv_out_eq(fxv_sh(vec, -2), offset, address)
+ 
+ #endif /* _S2PP_H */
+

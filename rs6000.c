@@ -2077,7 +2077,7 @@ rs6000_debug_reg_global (void)
     { VIRTUAL_PREFERRED_STACK_BOUNDARY_REGNUM,	"stack boundry:" },
     { LAST_VIRTUAL_REGISTER,			"last virtual: " },
   };
-/*p_o_i*/
+
   fputs ("\nHard register information:\n", stderr);
   rs6000_debug_reg_print (FIRST_GPR_REGNO, LAST_GPR_REGNO, "gr");
   rs6000_debug_reg_print (FIRST_FPR_REGNO, LAST_FPR_REGNO, "fp");
@@ -2578,7 +2578,7 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
   reg_class_to_reg_type[(int)SPE_ACC_REGS] = SPE_ACC_TYPE;
   reg_class_to_reg_type[(int)SPEFSCR_REGS] = SPEFSCR_REG_TYPE;
 
-  if (TARGET_VSX)/*p_o_i*/
+  if (TARGET_VSX)
     {
       reg_class_to_reg_type[(int)FLOAT_REGS] = VSX_REG_TYPE;
       reg_class_to_reg_type[(int)ALTIVEC_REGS] = VSX_REG_TYPE;
@@ -2589,7 +2589,7 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
       reg_class_to_reg_type[(int)ALTIVEC_REGS] = ALTIVEC_REG_TYPE;
     }
 
-  if (TARGET_S2PP)/*p_o_i*/
+  if (TARGET_S2PP)
     {
       reg_class_to_reg_type[(int)FLOAT_REGS] = NO_REG_TYPE; //S2PP_REG_TYPE;
       reg_class_to_reg_type[(int)S2PP_REGS] = S2PP_REG_TYPE; //S2PP_REG_TYPE;
@@ -2672,7 +2672,7 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
 	}
     }
   if (TARGET_S2PP)
-    {/*maybe add V4SI type for opaque handling --> nope */
+    {
       rs6000_vector_unit[V8HImode] = VECTOR_S2PP;
       rs6000_vector_mem[V8HImode] = VECTOR_S2PP;
       rs6000_vector_align[V8HImode] = align32;
@@ -2749,7 +2749,7 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
 	wy - Register class to do ISA 2.07 SF operations.
 	wz - Float register if we can do 32-bit unsigned int loads.  */
 
-  if (TARGET_HARD_FLOAT && TARGET_FPRS && !TARGET_S2PP)
+  if (TARGET_HARD_FLOAT && TARGET_FPRS)
     rs6000_constraints[RS6000_CONSTRAINT_f] = FLOAT_REGS;	/* SFmode  */
 
   if (TARGET_HARD_FLOAT && TARGET_FPRS && TARGET_DOUBLE_FLOAT)
@@ -3490,7 +3490,7 @@ rs6000_option_override_internal (bool global_init_p)
     rs6000_isa_flags |= (ISA_2_7_MASKS_SERVER & ~rs6000_isa_flags_explicit);
   else if (TARGET_VSX)
     rs6000_isa_flags |= (ISA_2_6_MASKS_SERVER & ~rs6000_isa_flags_explicit);
-  else if (TARGET_POPCNTD || TARGET_S2PP) //s2pp-mark
+  else if (TARGET_POPCNTD)// || TARGET_S2PP) //s2pp-mark
     rs6000_isa_flags |= (ISA_2_6_MASKS_EMBEDDED & ~rs6000_isa_flags_explicit);
   else if (TARGET_DFP)
     rs6000_isa_flags |= (ISA_2_5_MASKS_SERVER & ~rs6000_isa_flags_explicit);
@@ -4052,9 +4052,9 @@ rs6000_option_override_internal (bool global_init_p)
 	rs6000_cost = &ppca2_cost;
 	break;
 
-      case PROCESSOR_PPU:
-	rs6000_cost = &ppu_cost;
-	break;
+      //case PROCESSOR_PPU:
+	//rs6000_cost = &ppu_cost;
+	//break;
 
       default:
 	gcc_unreachable ();
@@ -5402,7 +5402,7 @@ easy_s2pp_constant (rtx op, enum machine_mode mode)
   step = GET_MODE_NUNITS (mode) / 4;
   copies = 1;
   
-  /* Then try with a vspltish.  */
+  /* Try with a vspltish.  */
   if (step == 1)
     copies <<= 1;
   else
@@ -6129,7 +6129,7 @@ rs6000_data_alignment (tree type, unsigned int align, enum data_align how)
 bool
 rs6000_special_adjust_field_align_p (tree field, unsigned int computed)
 {
-  if ((TARGET_ALTIVEC/* || TARGET_S2PP*/) && TREE_CODE (TREE_TYPE (field)) == VECTOR_TYPE)
+  if ((TARGET_ALTIVEC || TARGET_S2PP) && TREE_CODE (TREE_TYPE (field)) == VECTOR_TYPE)
     {
       if (computed != 128)
 	{
@@ -8100,21 +8100,17 @@ rs6000_conditional_register_usage (void)
 	= call_used_regs[14]
 	= call_really_used_regs[14] = 1;
     }
-/*p_o_i*/ 
-  if (!TARGET_ALTIVEC && !TARGET_VSX/* &&!TARGET_S2PP*/)
+
+  if (!TARGET_ALTIVEC && !TARGET_VSX)
     {
       for (i = FIRST_ALTIVEC_REGNO; i <= LAST_ALTIVEC_REGNO; ++i)
 	fixed_regs[i] = call_used_regs[i] = call_really_used_regs[i] = 1;
       call_really_used_regs[VRSAVE_REGNO] = 1;
     }
 
-  if (TARGET_ALTIVEC || TARGET_VSX/* || TARGET_S2PP*/)
+  if (TARGET_ALTIVEC || TARGET_VSX)
     global_regs[VSCR_REGNO] = 1;
-/*
-  if (!TARGET_S2PP) //disables float for non s2pp?
-    for (i = FIRST_S2PP_REGNO; i <= LAST_S2PP_REGNO; ++i)
-	fixed_regs[i] = call_used_regs[i] = call_really_used_regs[i] = 1;
-*/
+
   if (TARGET_ALTIVEC_ABI)
     {
       for (i = FIRST_ALTIVEC_REGNO; i < FIRST_ALTIVEC_REGNO + 20; ++i)
@@ -16296,65 +16292,6 @@ s2pp_init_builtins (void)
   def_builtin ("__builtin_vec_fxvaddtach", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_VEC_FXVADDTACH);
 
 
-  /* Add the DST variants.  */
-//  d = bdesc_dst;
-//  for (i = 0; i < ARRAY_SIZE (bdesc_dst); i++, d++)
-//    def_builtin (d->name, void_ftype_pcvoid_int_int, d->code);
-
-  /* Initialize the predicates.  */
-/*  d = bdesc_s2pp_preds;
-  for (i = 0; i < ARRAY_SIZE (bdesc_s2pp_preds); i++, d++)
-    {
-      enum machine_mode mode1;
-      tree type;
-
-      if (rs6000_overloaded_builtin_p (d->code))
-	mode1 = VOIDmode;
-      else
-	mode1 = insn_data[d->icode].operand[1].mode;
-
-      switch (mode1)
-	{
-	case VOIDmode:
-	  type = int_ftype_int_opaque_opaque;
-	  break;
-	case V8HImode:
-	  type = int_ftype_int_v8hi_v8hi;
-	  break;
-	case V16QImode:
-	  type = int_ftype_int_v16qi_v16qi;
-	  break;
-	default:
-	  gcc_unreachable ();
-	}
-
-      def_builtin (d->name, type, d->code);
-    }
-*/
-  /* Initialize the abs* operators.  */
-/*  d = bdesc_abs;
-  for (i = 0; i < ARRAY_SIZE (bdesc_abs); i++, d++)
-    {
-      enum machine_mode mode0;
-      tree type;
-
-      mode0 = insn_data[d->icode].operand[0].mode;
-
-      switch (mode0)
-	{
-	case V8HImode:
-	  type = v8hi_ftype_v8hi;
-	  break;
-	case V16QImode:
-	  type = v16qi_ftype_v16qi;
-	  break;
-	default:
-	  gcc_unreachable ();
-	}
-
-      def_builtin (d->name, type, d->code);
-    }
-*/
   /* Initialize target builtin that implements
      targetm.vectorize.builtin_mask_for_load.  */
 
@@ -17070,7 +17007,10 @@ expand_block_clear (rtx operands[])
       if (bytes >= 16 && (TARGET_ALTIVEC || TARGET_S2PP) && align >= 128)
 	{
 	  clear_bytes = 16;
-	  mode = V4SImode;
+      if(!TARGET_ALTIVEC)
+	    mode = V4SImode;
+      else
+	    mode = V8HImode;
 	}
       else if (bytes >= 8 && TARGET_SPE && align >= 64)
         {
@@ -17709,7 +17649,7 @@ register_to_reg_type (rtx reg, bool *is_altivec)
 
   gcc_assert (regno >= 0);
 
-  if (is_altivec && (ALTIVEC_REGNO_P (regno) ))//|| S2PP_REGNO_P (regno)))
+  if (is_altivec && (ALTIVEC_REGNO_P (regno) ))
     *is_altivec = true;
 
   rclass = rs6000_regno_regclass[regno];
@@ -17838,7 +17778,7 @@ rs6000_secondary_reload_direct_move (enum rs6000_reg_type to_type,
 	 reload support requires a single instruction class in the scratch
 	 register constraint.  However, right now TFmode is not allowed in
 	 Altivec registers, so the pattern will never match.  */
-      if (to_type == VSX_REG_TYPE && from_type == GPR_REG_TYPE && !altivec_p && !TARGET_S2PP)
+      if (to_type == VSX_REG_TYPE && from_type == GPR_REG_TYPE && !altivec_p)
 	{
 	  cost = 3;			/* 2 mtvsrwz's, 1 fmrgow.  */
 	  icode = reg_addr[mode].reload_fpr_gpr;
@@ -17932,7 +17872,7 @@ rs6000_secondary_reload (bool in_p,
     {
 	    /*p-o-i*/
       enum rs6000_reg_type to_type = reg_class_to_reg_type[(int)rclass];
-      bool altivec_p = (rclass == ALTIVEC_REGS);// || rclass == S2PP_REGS);
+      bool altivec_p = (rclass == ALTIVEC_REGS);
       enum rs6000_reg_type from_type = register_to_reg_type (x, &altivec_p);
 
       if (!in_p)
@@ -18698,13 +18638,6 @@ rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
     return rclass;
   }
   
-  //if (TARGET_S2PP && VECTOR_UNIT_S2PP_P (mode))
-    //return S2PP_REGS;
-
-  //maybe not needed!
-  //if (TARGET_S2PP && x == CONST0_RTX (mode) && S2PP_REG_CLASS_P (rclass))
-    //return rclass;
-
   if (VECTOR_UNIT_ALTIVEC_OR_VSX_P (mode)
       && (rclass == ALTIVEC_REGS || rclass == VSX_REGS)
       && easy_vector_constant (x, mode))
@@ -18775,9 +18708,9 @@ rs6000_secondary_memory_needed (enum reg_class from_class,
 				enum machine_mode mode)
 {
   enum rs6000_reg_type from_type, to_type;
-  bool altivec_p = //(from_class == ALTIVEC_REGS || to_class == ALTIVEC_REGS);
-	  ((from_class == ALTIVEC_REGS || from_class == S2PP_REGS)
-		    || (to_class == ALTIVEC_REGS || to_class == S2PP_REGS));
+  bool altivec_p = (from_class == ALTIVEC_REGS || to_class == ALTIVEC_REGS);
+	  //((from_class == ALTIVEC_REGS || from_class == S2PP_REGS)
+		    //|| (to_class == ALTIVEC_REGS || to_class == S2PP_REGS));
 
   /* If a simple/direct move is available, we don't need secondary memory  */
   from_type = reg_class_to_reg_type[(int)from_class];
@@ -18937,7 +18870,8 @@ rs6000_cannot_change_mode_class (enum machine_mode from,
 
   if (from_size != to_size)
     {
-      enum reg_class xclass = (TARGET_VSX) ? VSX_REGS : (TARGET_S2PP ? S2PP_REGS : FLOAT_REGS);
+      enum reg_class xclass = (TARGET_VSX) ? VSX_REGS : FLOAT_REGS;
+      //enum reg_class xclass = (TARGET_VSX) ? VSX_REGS : (TARGET_S2PP ? S2PP_REGS : FLOAT_REGS);
 
       if (reg_classes_intersect_p (xclass, rclass))
 	{
@@ -22250,9 +22184,6 @@ compute_vrsave_mask (void)
   for (i = FIRST_ALTIVEC_REGNO; i <= LAST_ALTIVEC_REGNO; ++i)
     if (df_regs_ever_live_p (i))
       mask |= ALTIVEC_REG_BIT (i);
-  //for (i = FIRST_S2PP_REGNO; i <= LAST_S2PP_REGNO; ++i)
-    //if (df_regs_ever_live_p (i))
-      //mask |= S2PP_REG_BIT (i);
 
   if (mask == 0)
     return mask;
@@ -24786,9 +24717,6 @@ rs6000_emit_prologue (void)
 	    emit_move_insn (areg, GEN_INT (offset)); 
 	    rtx mem = gen_frame_mem (V8HImode,gen_rtx_PLUS (Pmode, frame_reg_rtx, areg));
 	    insn = emit_move_insn (mem, savereg);
-	    
-	    emit_insn (gen_sync());
-
   	    rs6000_frame_related (insn, frame_reg_rtx, sp_off-frame_off, areg,
 			    		GEN_INT(offset), NULL_RTX);
 	  }
@@ -32645,7 +32573,7 @@ rs6000_vectorize_vec_perm_const_ok (enum machine_mode vmode,
 				    const unsigned char *sel)
 {
   /* AltiVec (and thus VSX) can handle arbitrary permutations.  */
-  if (TARGET_ALTIVEC || TARGET_S2PP)
+  if (TARGET_ALTIVEC)
     return true;
 
   /* Check for ps_merge* or evmerge* insns.  */
@@ -33212,7 +33140,7 @@ struct rs6000_opt_mask {
   bool invert;			/* invert sense of mask */
   bool valid_target;		/* option is a target option */
 };
-/*p_o_i*/ 
+
 static struct rs6000_opt_mask const rs6000_opt_masks[] =
 {
   { "altivec",			OPTION_MASK_ALTIVEC,		false, true  },
@@ -33238,13 +33166,13 @@ static struct rs6000_opt_mask const rs6000_opt_masks[] =
   { "quad-memory",		OPTION_MASK_QUAD_MEMORY,	false, true  },
   { "quad-memory-atomic",	OPTION_MASK_QUAD_MEMORY_ATOMIC,	false, true  },
   { "recip-precision",		OPTION_MASK_RECIP_PRECISION,	false, true  },
+  { "s2pp",			OPTION_MASK_S2PP,		false, true  },//s2pp-mark
   { "string",			OPTION_MASK_STRING,		false, true  },
   { "update",			OPTION_MASK_NO_UPDATE,		true , true  },
   { "upper-regs-df",		OPTION_MASK_UPPER_REGS_DF,	false, false },
   { "upper-regs-sf",		OPTION_MASK_UPPER_REGS_SF,	false, false },
   { "vsx",			OPTION_MASK_VSX,		false, true  },
   { "vsx-timode",		OPTION_MASK_VSX_TIMODE,		false, true  },
-  { "s2pp",			OPTION_MASK_S2PP,		false, false  },//s2pp-mark
 #ifdef OPTION_MASK_64BIT
 #if TARGET_AIX_OS
   { "aix64",			OPTION_MASK_64BIT,		false, false },
@@ -33291,6 +33219,7 @@ static struct rs6000_opt_mask const rs6000_builtin_mask_names[] =
   { "hard-float",	 RS6000_BTM_HARD_FLOAT,	false, false },
   { "long-double-128",	 RS6000_BTM_LDBL128,	false, false },
   { "s2pp",		 RS6000_BTM_S2PP,	false, false },//s2pp-mark
+  //used for printing builtin options
 };
 
 /* Option variables that we want to support inside attribute((target)) and

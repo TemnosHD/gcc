@@ -67,7 +67,7 @@ enum processor_type
    PROCESSOR_PPCA2,
    PROCESSOR_TITAN,
 
-   PROCESSOR_PPU
+   //PROCESSOR_PPU
 };
 
 
