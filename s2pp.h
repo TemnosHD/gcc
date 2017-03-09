@@ -60,16 +60,18 @@
 #define fxv_in_eq __builtin_vec_in_eq
 #define fxv_out_eq __builtin_vec_out_eq
 
-#define vec_sel(x,y) fxv_sel(x,y,0)
 #define fxv_sel __builtin_vec_fxvsel
 #define fxv_sel_gt(x,y) fxv_sel(x,y,1)
 #define fxv_sel_lt(x,y) fxv_sel(x,y,2)
 #define fxv_sel_eq(x,y) fxv_sel(x,y,3)
 
 #define vec_extract __builtin_vec_extract
+#define fxv_extract __builtin_vec_extract
 #define vec_insert __builtin_vec_insert
+#define fxv_insert __builtin_vec_insert
 #define vec_splats __builtin_vec_splats
 #define vec_promote __builtin_vec_promote
+#define fxv_promote __builtin_vec_promote
 
 #define vec_add fxv_add
 #define fxv_add __builtin_vec_fxvadd
@@ -123,8 +125,8 @@
 #define fxv_upckbl_c __builtin_vec_fxvupckbl
 #define fxv_upckbr_c __builtin_vec_fxvupckbr
 
-#define fxv_splath vec_splat_s16
-#define fxv_splatb vec_splat_s8
+#define fxv_splath __builtin_s2pp_fxvsplath
+#define fxv_splatb __builtin_s2pp_fxvsplatb
 #define vec_splat_s16(x) __builtin_s2pp_fxvsplath ((x))
 #define vec_splat_s8(x) __builtin_s2pp_fxvsplatb ((x))
 #define vec_splat_u16(x) ((__vector unsigned short) vec_splat_s16 ((x)))
@@ -219,4 +221,5 @@
 #define fxv_addtacb_c __builtin_vec_fxvaddtacb
 
 #define vec_step(x) __builtin_vec_step (* (__typeof__ (x) *) 0)
+#define fxv_steps(x) __builtin_vec_step (* (__typeof__ (x) *) 0)
 #endif /* _S2PP_H */
