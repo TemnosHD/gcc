@@ -398,13 +398,8 @@ rs6000_cpu_cpp_builtins (cpp_reader *pfile)
 
   if (TARGET_S2PP){
     builtin_define ("__vector=__attribute__((s2pp(vector__)))");
-    builtin_define ("__pixel=__attribute__((s2pp(pixel__))) unsigned short");
-    builtin_define ("__bool=__attribute__((s2pp(bool__))) unsigned");
     if (!flag_iso){
       builtin_define ("vector=vector");
-      builtin_define ("pixel=pixel");
-      builtin_define ("bool=bool");
-      builtin_define ("_Bool=_Bool");
       init_vector_keywords ();
       /* Enable context-sensitive macros.  */
       cpp_get_callbacks (pfile)->macro_to_expand = rs6000_macro_to_expand;

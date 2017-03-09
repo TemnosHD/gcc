@@ -705,10 +705,8 @@ extern unsigned char rs6000_recip_bits[];
 #define REGISTER_TARGET_PRAGMAS() do {				\
   c_register_pragma (0, "longcall", rs6000_pragma_longcall);	\
   targetm.target_option.pragma_parse = rs6000_pragma_target_parse; \
-  if(OPTION_MASK_S2PP) \
-    targetm.resolve_overloaded_builtin = s2pp_resolve_overloaded_builtin; \
-  else \
-    targetm.resolve_overloaded_builtin = altivec_resolve_overloaded_builtin; \
+  targetm.resolve_overloaded_builtin = (TARGET_S2PP ?\
+     s2pp_resolve_overloaded_builtin : altivec_resolve_overloaded_builtin); \
   rs6000_target_modify_macros_ptr = rs6000_target_modify_macros; \
 } while (0)
 

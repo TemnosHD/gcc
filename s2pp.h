@@ -123,8 +123,8 @@
 #define fxv_upckbl_c __builtin_vec_fxvupckbl
 #define fxv_upckbr_c __builtin_vec_fxvupckbr
 
-#define fxv_splath vec_splat_u16
-#define fxv_splatb vec_splat_u8
+#define fxv_splath vec_splat_s16
+#define fxv_splatb vec_splat_s8
 #define vec_splat_s16(x) __builtin_s2pp_fxvsplath ((x))
 #define vec_splat_s8(x) __builtin_s2pp_fxvsplatb ((x))
 #define vec_splat_u16(x) ((__vector unsigned short) vec_splat_s16 ((x)))
@@ -218,4 +218,5 @@
 #define fxv_addtach_c __builtin_vec_fxvaddtach
 #define fxv_addtacb_c __builtin_vec_fxvaddtacb
 
+#define vec_step(x) __builtin_vec_step (* (__typeof__ (x) *) 0)
 #endif /* _S2PP_H */

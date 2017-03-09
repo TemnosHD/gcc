@@ -147,8 +147,7 @@
 ;; 1 at the end  of case 6 for gt comp -> similar to xor(1,1)
 ;; alternatively use 2
 
-;; eventually drop peephole and use split instead -> reload_complete good test -> nope MUST be pro reload?
-
+;;keep this, for later, as sync might become necessary again
 ;;(define_split
 ;;  [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
 ;;	(match_operand:FXVI 1 "indexed_or_indirect_operand" ""))] 
@@ -188,94 +187,48 @@
   }")
 
 ;;store
-(define_insn_and_split "s2pp_fxvstax<fxvstax_char><mode>"
+(define_insn "s2pp_fxvstax<fxvstax_char><mode>"
   [(parallel
     [(set (match_operand:FXVI 0 "memory_operand" "=Z")
 	  (match_operand:FXVI 1 "register_operand" "kv"))
     (unspec [(const_int 0)] FXVSTAX)])]
   "TARGET_S2PP"
-  "#"
-  "reload_completed && !optimize_size"
-  [(set (match_operand:FXVI 0 "memory_operand" "")
-	(unspec:FXVI [(match_operand:FXVI 1 "s2pp_register_operand" "")] FXVSTAX))]
-   ;;(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
-  ""
-  [(set_attr "type" "vecstore")])
-
-(define_insn "*s2pp_fxvstax_<fxvstax_int>_<mode>_direct"
-  [(set (match_operand:FXVI 0 "memory_operand" "=Z")
-	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")] FXVSTAX))]
-  "TARGET_S2PP"
   "fxvstax %1,%y0,<fxvstax_int>"
   [(set_attr "type" "vecstore")])
 
 ;;load
-(define_insn_and_split "s2pp_fxvlax<fxvlax_char><mode>"
+(define_insn "s2pp_fxvlax<fxvlax_char><mode>"
 [(parallel
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
 	(match_operand:FXVI 1 "memory_operand" "Z"))
      (unspec [(const_int 0)] FXVLAX)])]
   "TARGET_S2PP"
-  "#"
-  "reload_completed && !optimize_size"
-  [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
-	(unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "")] FXVLAX))]
-;;   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
-  ""
-  [(set_attr "type" "vecload")])
-
-(define_insn "*s2pp_fxvlax_<fxvlax_int>_<mode>_direct"
-  [(set (match_operand:FXVI 0 "register_operand" "=kv")
-	(unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "Z")] FXVLAX))]
-  "TARGET_S2PP"
   "fxvlax %0,%y1,<fxvlax_int>"
   [(set_attr "type" "vecload")])
 
-(define_insn "s2pp_fxvlax_direct"
-  [(set (match_operand:V16QI 0 "register_operand" "=kv")
-	(unspec:V16QI [(match_operand:V16QI 1 "memory_operand" "Z")]
-                      UNSPEC_FXVLAX_DIRECT))]
-  "TARGET_S2PP"
-  "fxvlax %0,%y1"
-  [(set_attr "type" "vecload")])
+;;(define_insn "s2pp_fxvlax_direct"
+;;  [(set (match_operand:V16QI 0 "register_operand" "=kv")
+;;	(unspec:V16QI [(match_operand:V16QI 1 "memory_operand" "Z")]
+;;                      UNSPEC_FXVLAX_DIRECT))]
+;;  "TARGET_S2PP"
+;;  "fxvlax %0,%y1"
+;;  [(set_attr "type" "vecload")])
 
 ;;synram
-(define_insn_and_split "s2pp_fxvoutx<fxvoutx_char><mode>"
+(define_insn "s2pp_fxvoutx<fxvoutx_char><mode>"
   [(parallel
     [(set (match_operand:FXVI 0 "memory_operand" "=Z")
 	  (match_operand:FXVI 1 "register_operand" "kv"))
     (unspec [(const_int 0)] FXVOUTX)])]
   "TARGET_S2PP"
-  "#"
-  "reload_completed"
-  [(set (match_operand:FXVI 0 "memory_operand" "=Z")
-	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")] FXVOUTX))]
-  ""
-  [(set_attr "type" "vecstore")])
-
-(define_insn "*s2pp_fxvoutx_<fxvoutx_int>_<mode>_direct"
-  [(set (match_operand:FXVI 0 "memory_operand" "=Z")
-	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")] FXVOUTX))]
-  "TARGET_S2PP"
   "fxvoutx %1,%y0,<fxvoutx_int>"
   [(set_attr "type" "vecstore")])
 
-(define_insn_and_split "s2pp_fxvinx<fxvinx_char><mode>"
+(define_insn "s2pp_fxvinx<fxvinx_char><mode>"
   [(parallel
     [(set (match_operand:FXVI 0 "register_operand" "=kv")
 	  (match_operand:FXVI 1 "memory_operand" "Z"))
      (unspec [(const_int 0)] FXVINX)])]
-  "TARGET_S2PP"
-  "#"
-  "reload_completed"
-  [(set (match_operand:FXVI 0 "register_operand" "")
-        (unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "")] FXVINX))]
-  ""
-  [(set_attr "type" "vecload")])
-
-(define_insn "s2pp_fxvinx_<fxvinx_int>_<mode>"
-  [(set (match_operand:FXVI 0 "register_operand" "=kv")
-        (unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "Z")] FXVINX))]
   "TARGET_S2PP"
   "fxvinx %0,%y1,<fxvinx_int>"
   [(set_attr "type" "vecload")])

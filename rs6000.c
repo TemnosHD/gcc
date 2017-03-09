@@ -1804,10 +1804,6 @@ rs6000_hard_regno_mode_ok (int regno, enum machine_mode mode)
      modes and DImode.  */
   if (FP_REGNO_P (regno) && !TARGET_S2PP)
     {
-      //if (VECTOR_MEM_S2PP_P (mode))
-	//return 1;
-      //fpregno = s2ppregno
-
       if (SCALAR_FLOAT_MODE_P (mode)
 	  && (mode != TDmode || (regno % 2) == 0)
 	  && FP_REGNO_P (last_regno))
@@ -1839,10 +1835,6 @@ rs6000_hard_regno_mode_ok (int regno, enum machine_mode mode)
     return (VECTOR_MEM_ALTIVEC_OR_VSX_P (mode)
 	    || mode == V1TImode);
 
-  /* s2pp only in s2pp/FP registers.  */
-  //if (S2PP_REGNO_P (regno))
-    //return VECTOR_MEM_S2PP_P (mode);
-  
   /* ...but GPRs can hold SIMD data on the SPE in one register.  */
   if (SPE_SIMD_REGNO_P (regno) && TARGET_SPE && SPE_VECTOR_MODE (mode))
     return 1;
@@ -3490,7 +3482,7 @@ rs6000_option_override_internal (bool global_init_p)
     rs6000_isa_flags |= (ISA_2_7_MASKS_SERVER & ~rs6000_isa_flags_explicit);
   else if (TARGET_VSX)
     rs6000_isa_flags |= (ISA_2_6_MASKS_SERVER & ~rs6000_isa_flags_explicit);
-  else if (TARGET_POPCNTD)// || TARGET_S2PP) //s2pp-mark
+  else if (TARGET_POPCNTD)
     rs6000_isa_flags |= (ISA_2_6_MASKS_EMBEDDED & ~rs6000_isa_flags_explicit);
   else if (TARGET_DFP)
     rs6000_isa_flags |= (ISA_2_5_MASKS_SERVER & ~rs6000_isa_flags_explicit);
@@ -5490,11 +5482,9 @@ output_vec_const_move (rtx *operands)
       } 
       mode = GET_MODE (splat_vec);
       if (mode == V8HImode){
-        //emit_insn(gen_s2pp_fxvsplath_internal(dest, vec));
 	return "#";
       }
       else if (mode == V16QImode){
-        //emit_insn(gen_s2pp_fxvsplatb_internal(dest, vec));
 	return "#";
       }
       else
@@ -14878,44 +14868,44 @@ rs6000_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
 	}
       break;
 
-    case S2PP_BUILTIN_MASK_FOR_LOAD:
-    case S2PP_BUILTIN_MASK_FOR_STORE:
-      {
-	int icode = CODE_FOR_s2pp_fxvlax_direct;
-	enum machine_mode tmode = insn_data[icode].operand[0].mode;
-	enum machine_mode mode = insn_data[icode].operand[1].mode;
-	tree arg;
-	rtx op, addr, pat;
+    //case S2PP_BUILTIN_MASK_FOR_LOAD:
+    //case S2PP_BUILTIN_MASK_FOR_STORE:
+    //  {
+	//int icode = CODE_FOR_s2pp_fxvlax_direct;
+	//enum machine_mode tmode = insn_data[icode].operand[0].mode;
+	//enum machine_mode mode = insn_data[icode].operand[1].mode;
+	//tree arg;
+	//rtx op, addr, pat;
 
-	gcc_assert (TARGET_S2PP);
+	//gcc_assert (TARGET_S2PP);
 
-	arg = CALL_EXPR_ARG (exp, 0);
-	gcc_assert (POINTER_TYPE_P (TREE_TYPE (arg)));
-	op = expand_expr (arg, NULL_RTX, Pmode, EXPAND_NORMAL);
-	addr = memory_address (mode, op);
-	if (fcode == S2PP_BUILTIN_MASK_FOR_STORE)
-	  op = addr;
-	else
-	  {
-	    /* For the load case need to negate the address.  */
-	    op = gen_reg_rtx (GET_MODE (addr));
-	    emit_insn (gen_rtx_SET (VOIDmode, op,
-				    gen_rtx_NEG (GET_MODE (addr), addr)));
-	  }
-	op = gen_rtx_MEM (mode, op);
+	//arg = CALL_EXPR_ARG (exp, 0);
+	//gcc_assert (POINTER_TYPE_P (TREE_TYPE (arg)));
+	//op = expand_expr (arg, NULL_RTX, Pmode, EXPAND_NORMAL);
+	//addr = memory_address (mode, op);
+	//if (fcode == S2PP_BUILTIN_MASK_FOR_STORE)
+	//  op = addr;
+	//else
+	//  {
+	//    /* For the load case need to negate the address.  */
+	//    op = gen_reg_rtx (GET_MODE (addr));
+	//    emit_insn (gen_rtx_SET (VOIDmode, op,
+	//			    gen_rtx_NEG (GET_MODE (addr), addr)));
+	//  }
+	//op = gen_rtx_MEM (mode, op);
 
-	if (target == 0
-	    || GET_MODE (target) != tmode
-	    || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
-	  target = gen_reg_rtx (tmode);
+	//if (target == 0
+	//    || GET_MODE (target) != tmode
+	//    || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
+	//  target = gen_reg_rtx (tmode);
 
-	pat = GEN_FCN (icode) (target, op);
-	if (!pat)
-	  return 0;
-	emit_insn (pat);
+	//pat = GEN_FCN (icode) (target, op);
+	//if (!pat)
+	//  return 0;
+	//emit_insn (pat);
 
-	return target;
-      }
+	//return target;
+    //  }
 
     default:
       break;
@@ -18871,7 +18861,6 @@ rs6000_cannot_change_mode_class (enum machine_mode from,
   if (from_size != to_size)
     {
       enum reg_class xclass = (TARGET_VSX) ? VSX_REGS : FLOAT_REGS;
-      //enum reg_class xclass = (TARGET_VSX) ? VSX_REGS : (TARGET_S2PP ? S2PP_REGS : FLOAT_REGS);
 
       if (reg_classes_intersect_p (xclass, rclass))
 	{

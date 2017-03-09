@@ -130,8 +130,8 @@ do {									\
     }									\
   else if (OPTION_MASK_S2PP \
            && OPTION_MASK_SOFT_FLOAT \
-           && OPTION_MASK_STRICT_ALIGN \
-           && !OPTION_MASK_RELOCATABLE)					\
+           && !TARGET_RELOCATABLE \
+           && OPTION_MASK_STRICT_ALIGN)					\
     {									\
       rs6000_sdata = SDATA_NONE;					\
       rs6000_sdata_name = "none";					\
