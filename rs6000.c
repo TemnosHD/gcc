@@ -4193,8 +4193,6 @@ rs6000_builtin_mask_for_load (void)
 {
   if (TARGET_ALTIVEC || TARGET_VSX)
     return altivec_builtin_mask_for_load;
-  else if (TARGET_S2PP)
-    return s2pp_builtin_mask_for_load;
   else
     return 0;
 }
@@ -14868,45 +14866,6 @@ rs6000_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
 	}
       break;
 
-    //case S2PP_BUILTIN_MASK_FOR_LOAD:
-    //case S2PP_BUILTIN_MASK_FOR_STORE:
-    //  {
-	//int icode = CODE_FOR_s2pp_fxvlax_direct;
-	//enum machine_mode tmode = insn_data[icode].operand[0].mode;
-	//enum machine_mode mode = insn_data[icode].operand[1].mode;
-	//tree arg;
-	//rtx op, addr, pat;
-
-	//gcc_assert (TARGET_S2PP);
-
-	//arg = CALL_EXPR_ARG (exp, 0);
-	//gcc_assert (POINTER_TYPE_P (TREE_TYPE (arg)));
-	//op = expand_expr (arg, NULL_RTX, Pmode, EXPAND_NORMAL);
-	//addr = memory_address (mode, op);
-	//if (fcode == S2PP_BUILTIN_MASK_FOR_STORE)
-	//  op = addr;
-	//else
-	//  {
-	//    /* For the load case need to negate the address.  */
-	//    op = gen_reg_rtx (GET_MODE (addr));
-	//    emit_insn (gen_rtx_SET (VOIDmode, op,
-	//			    gen_rtx_NEG (GET_MODE (addr), addr)));
-	//  }
-	//op = gen_rtx_MEM (mode, op);
-
-	//if (target == 0
-	//    || GET_MODE (target) != tmode
-	//    || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
-	//  target = gen_reg_rtx (tmode);
-
-	//pat = GEN_FCN (icode) (target, op);
-	//if (!pat)
-	//  return 0;
-	//emit_insn (pat);
-
-	//return target;
-    //  }
-
     default:
       break;
     }
@@ -16281,17 +16240,6 @@ s2pp_init_builtins (void)
   def_builtin ("__builtin_vec_fxvaddtacb", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_VEC_FXVADDTACB);
   def_builtin ("__builtin_vec_fxvaddtach", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_VEC_FXVADDTACH);
 
-
-  /* Initialize target builtin that implements
-     targetm.vectorize.builtin_mask_for_load.  */
-
-  decl = add_builtin_function ("__builtin_s2pp_mask_for_load",
-			       v16qi_ftype_long_pcvoid,
-			       S2PP_BUILTIN_MASK_FOR_LOAD,
-			       BUILT_IN_MD, NULL, NULL_TREE);
-  TREE_READONLY (decl) = 1;
- /* Record the decl. Will be used by rs6000_builtin_mask_for_load.  */
-  s2pp_builtin_mask_for_load = decl;
 
   /* Access to the vec_init patterns.  */
   ftype = build_function_type_list (V8HI_type_node, short_integer_type_node,
